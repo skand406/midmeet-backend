@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+ //-----------------------------------------------------------------------
+enum RoleType {
+  LEADER
+  MEMBER
+}
+
+enum TransportMode {
+  BUS
+  SUBWAY
+}
+
+enum PartyType {
+  AI_COURSE
+  CUSTOM_COURSE
+}
+
+/* Models */
+model User {
+  uid      String        @id @db.VarChar(191)        //ex cuid/uuid 수동 세팅 가능
+  email    String        @db.VarChar(191)
+  passwd   String
+  name     String?
+  phone    String?
+
+  participants Participant[]
+}
+
+model Party {
+  party_id   String     @id @db.VarChar(191)
+  date_time  DateTime?
+  party_name String
+  party_type PartyType? // DBML에 [not null] 명시가 없어서 optional로 매핑
+
+  participants Participant[]
+  courses      Course[]
+}
+
+model Participant {
+  participant_id String        @id @db.VarChar(191)
+  party_id       String        @db.VarChar(191)
+  user_uid       String?       @db.VarChar(191)      // DBML에 not null 아님 → optional
+  transport_mode TransportMode?
+  role           RoleType?
+  code           String?
+
+  // 스냅샷(재사용 없음)
+  start_lat     Decimal?      @db.Decimal(9, 6)
+  start_lng     Decimal?      @db.Decimal(9, 6)
+  start_address String?
+
+  party Party @relation(fields: [party_id], references: [party_id])
+  user  User? @relation(fields: [user_uid],  references: [uid])
+
+  @@index([party_id])
+  @@index([user_uid])
+  @@unique([party_id, user_uid]) // 같은 모임에서 같은 유저 1회만 (user_uid가 NULL이면 중복 허용됨: MySQL 특성)
+}
+
+model Course {
+  course_id     String   @id @db.VarChar(191)
+  party_id      String   @db.VarChar(191)
+  place_name    String?
+  place_address String?
+  course_no     Int?
+  tag           String?
+
+  party Party @relation(fields: [party_id], references: [party_id])
+
+  @@index([party_id, course_no])
+}
