@@ -46,6 +46,7 @@ model Party {
   date_time  DateTime?
   party_name String
   party_type PartyType? // DBML에 [not null] 명시가 없어서 optional로 매핑
+  party_state Boolean    @default(false)
 
   participants Participant[]
   courses      Course[]
@@ -79,6 +80,7 @@ model Course {
   place_address String?
   course_no     Int?
   tag           String?
+  course_view   Boolean  @default(true)
 
   party Party @relation(fields: [party_id], references: [party_id])
 
