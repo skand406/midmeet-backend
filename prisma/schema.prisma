@@ -32,12 +32,13 @@ enum PartyType {
 
 /* Models */
 model User {
-  uid      String        @id @db.VarChar(191)        //ex cuid/uuid 수동 세팅 가능
+  uid      String        @id @default(cuid()) @db.VarChar(191)        //ex cuid/uuid 수동 세팅 가능
   email    String        @db.VarChar(191)
   passwd   String
   name     String?
   phone    String?
-
+  id       String        @unique @db.VarChar(191)
+  
   participants Participant[]
 }
 
