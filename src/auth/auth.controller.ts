@@ -28,11 +28,5 @@ export class AuthController {
   }
 
   // 쿠키 삭제 (로그아웃)
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token');
-    return { message: 'logged out' };
-  }
 
 }
