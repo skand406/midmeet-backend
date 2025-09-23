@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CheckIdDto } from './dto/check-id.dto';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FindIdDto } from './dto/find-id.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Req } from '@nestjs/common';
+import { UpdateUserDto } from './dto/update-user.dto';
+
 
 @Controller('user')
 export class UserController {
@@ -29,28 +33,28 @@ export class UserController {
   async findId(@Query() q: FindIdDto) {
     return this.userService.findId(q.email);
   }
-  // @Post()
-  // create(@Body() createUserDto: CreateUserDto) {
-  //   return this.userService.create(createUserDto);
-  // }
+  
+  @UseGuards(JwtAuthGuard)
+  @Get('user-info')
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'JWT 토큰',
+    required: true,
+  })
+  async getUserInfo(@Req() req) {
+    const uid = req.user.uid; // JWT에서 추출된 값
+    return  this.userService.getUserInfo(uid);
+  }
 
-  // @Get()
-  // findAll() {
-  //   return this.userService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.userService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.userService.update(+id, updateUserDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.userService.remove(+id);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @Patch('user-info')
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'JWT 토큰',
+    required: true,
+  })
+  async updateUserInfo(@Req() req, @Body() body: UpdateUserDto) {
+    const uid = req.user.uid; // JWT에서 추출된 값
+    return this.userService.updateUser(uid, body);
+  }
 }
