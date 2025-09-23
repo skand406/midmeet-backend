@@ -22,9 +22,9 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const { token } = await this.authService.login(dto);
+    const { user, token } = await this.authService.login(dto);
     
-    return { token };
+    return { user, token };
   }
 
   // 쿠키 삭제 (로그아웃)

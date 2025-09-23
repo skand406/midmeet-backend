@@ -75,7 +75,8 @@ export class AuthService {
       if (!ok) throw new UnauthorizedException('passwd-Invalid credentials');
 
       const token = await this.sign({ uid: user.uid, id: user.id });
-      return { token };
+      const { passwd, ...safeUser } = user; // 비밀번호 제거
+      return { token, user:safeUser };
 
     } catch (e) {
       // 이미 우리가 의도적으로 던진 UnauthorizedException은 그대로 전달
