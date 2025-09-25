@@ -38,9 +38,23 @@ model User {
   name     String?
   phone    String?
   id       String        @unique @db.VarChar(191)
+  isVerified  Boolean    @default(false)
   
+  verificationTokens VerificationToken[]
   participants Participant[]
 }
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  type      String   //  EMAIL | RESET
+  userUid   String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user User @relation(fields: [userUid], references: [uid], onDelete: Cascade)
+}
+
 
 model Party {
   party_id   String     @id @db.VarChar(191)

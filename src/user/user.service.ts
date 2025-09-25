@@ -3,10 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 import { FindIdDto } from './dto/find-id.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService
+  ) {}
   
   async isCheckIdAvailable(id: string) {
     const found = await this.prisma.user.findUnique({ where: { id } });
@@ -52,5 +56,21 @@ export class UserService {
       },
     }); 
     return { user };
+  }
+
+  async findById(uid: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { uid },
+    });
+    return user;  
+  }
+
+  async requestEmailChange(uid: string, email: string) {
+    await this.prisma.user.update({
+      where: { uid: uid },
+      data: { isVerified: false },
+    });
+    await this.mail.sendVerificationMail(email, uid);
+    return { message: '이메일 변경 요청이 접수되었습니다. 새로운 이메일로 인증 메일이 발송되었습니다.' };
   }
 }

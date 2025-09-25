@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards, Get } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards, Get, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -25,6 +25,14 @@ export class AuthController {
     const { user, token } = await this.authService.login(dto);
     
     return { user, token };
+  }
+
+  // 이메일 인증
+  @Get('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Query('token') token: string) {
+    await this.authService.verifyEmail(token);
+    return { message: '이메일 인증이 완료되었습니다.' };
   }
 
   // 쿠키 삭제 (로그아웃)

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CheckIdDto } from './dto/check-id.dto';
 import { ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -55,6 +55,29 @@ export class UserController {
   })
   async updateUserInfo(@Req() req, @Body() body: UpdateUserDto) {
     const uid = req.user.uid; // JWT에서 추출된 값
+    const user = await this.userService.findById(uid);
+    
+    if (!user) {
+      throw new NotFoundException('해당 사용자가 존재하지 않습니다.');
+    }
+    if (!user.isVerified) {
+      throw new ForbiddenException('이메일 인증 후에만 정보 수정이 가능합니다.');
+    }
+
     return this.userService.updateUser(uid, body);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('email-change')
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'JWT 토큰',
+    required: true,
+  })
+  async requestEmailChange(@Req() req, @Body('email') email: string) {
+    const uid = req.user.uid;
+
+    return this.userService.requestEmailChange(uid, email);
+  }
+
 }

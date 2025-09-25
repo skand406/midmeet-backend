@@ -4,10 +4,16 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private jwt: JwtService,
+    private mail: MailService
+  ) {}
+
   //jwt 토큰 발급
   private sign(user: { uid: string; id: string }) {
     return this.jwt.signAsync({ sub: user.uid, id: user.id });
@@ -32,12 +38,18 @@ export class AuthService {
           phone: true, 
         },
       });
+
       const token = await this.sign({ uid: user.uid, id: user.id });
+
+      // 이메일 인증 링크 전송
+      await this.mail.sendVerificationMail(user.email, user.uid);
+
       return { user, token };
     } catch (e: any) {
       // Prisma unique constraint 위반 → 409 Conflict
       if (e?.code === 'P2002') {
-        const fields = (e.meta?.target as string[])?.join(', ');
+        const target = e.meta?.target;
+        const fields = Array.isArray(target) ? target.join(', ') : String(target);
         throw new ConflictException(`${fields} already in use`); // 409
       }
 
@@ -87,5 +99,19 @@ export class AuthService {
       // 나머지(DB 끊김, bcrypt 내부 오류 등)는 500으로 통일
       throw new InternalServerErrorException('Server error during login');
     }
+  }
+  // 이메일 인증
+  async verifyEmail(token: string) {
+    // 토큰 검증
+    const record = await this.mail.verifyToken(token, 'EMAIL');  
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({ 
+        where: { uid: record.userUid }, 
+        data: { isVerified: true } }),
+    ]);
+    await this.mail.markUsed(record.id);
+
+    return { message: '이메일 인증 완료' };
   }
 }
