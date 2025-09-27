@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, NotFoundException, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CheckIdDto } from './dto/check-id.dto';
 import { ApiBody, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -13,6 +13,7 @@ import { ResetPasswdDto } from './dto/reset-passwd.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
   
+  @HttpCode(HttpStatus.OK)
   @Get('check-id')
   @ApiQuery({ 
     name: 'id', 
@@ -24,6 +25,7 @@ export class UserController {
     return this.userService.isCheckIdAvailable(q.id);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Get('find-id')
   @ApiQuery({ 
     name: 'email', 
@@ -36,6 +38,7 @@ export class UserController {
   }
   
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Get('user-info')
   @ApiHeader({
     name: 'Authorization',
@@ -48,6 +51,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Patch('user-info')
   @ApiHeader({
     name: 'Authorization',
@@ -69,7 +73,8 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('email-change')
+  @HttpCode(HttpStatus.OK)
+  @Post('change-email')
   @ApiHeader({
     name: 'Authorization',
     description: 'JWT 토큰',
@@ -104,6 +109,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Patch('change-password')
   @ApiHeader({
     name: 'Authorization',

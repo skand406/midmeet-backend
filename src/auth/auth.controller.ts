@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ApiBody, ApiQuery } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -12,6 +13,10 @@ export class AuthController {
   // 회원가입 + 자동 로그인(쿠키에 JWT 심기)
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
+  @ApiBody({ 
+    type: CreateUserDto, 
+    description: '회원가입 정보', 
+  })
   async signup(@Body() dto: CreateUserDto, @Res({ passthrough: true }) res: Response) {
     const { user, token } = await this.authService.signup(dto);
     
@@ -21,6 +26,10 @@ export class AuthController {
   // 로그인
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiBody({ 
+    type: LoginDto, 
+    description: '로그인 정보', 
+  })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { user, token } = await this.authService.login(dto);
     
@@ -30,6 +39,13 @@ export class AuthController {
   // 이메일 인증
   @Get('verify-email')
   @HttpCode(HttpStatus.OK)
+  @ApiQuery({
+    name: 'token',
+    type: 'string',
+    description: '이메일 인증 토큰',
+    example: 'd1f2e3c4b5a697887766554433221100',
+    required: true,
+  })
   async verifyEmail(@Query('token') token: string) {
     await this.authService.verify(token,'EMAIL');
     return { message: '이메일 인증이 완료되었습니다.' };
@@ -37,8 +53,28 @@ export class AuthController {
   // 비밀번호 재설정 메일 전송
   @Post('verify-reset')
   @HttpCode(HttpStatus.OK)
+  @ApiQuery({ 
+    name: 'token', 
+    type: 'string',
+    description: '비밀번호 재설정 토큰',
+    example: 'd1f2e3c4b5a697887766554433221100',
+    required: true,
+  })
+  @ApiBody({ 
+    schema: {
+      type: 'object',
+      properties: {
+        passwd: {
+          type: 'string',
+          example: 'new_password123',
+        },
+      },
+    },
+    description: '새 비밀번호',
+    required: true,
+  })
   async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string) {
-    await this.authService.verify(token, 'RESET');
+    await this.authService.verify(token, 'RESET', passwd);
     return { message: '비밀번호가 재설정되었습니다.'};
   }
 
