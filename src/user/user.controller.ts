@@ -49,7 +49,7 @@ export class UserController {
     const uid = req.user.uid; // JWT에서 추출된 값
     return  this.userService.getUserInfo(uid);
   }
-
+  // 사용자 정보 수정 (이메일 인증된 사용자만 가능)
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Patch('user-info')
@@ -67,6 +67,9 @@ export class UserController {
     }
     if (!user.isVerified) {
       throw new ForbiddenException('이메일 인증 후에만 정보 수정이 가능합니다.');
+    }
+    if (user.isVerified && user.email !== body.email) {
+      throw new ForbiddenException('이메일 인증이 필요합니다.');
     }
 
     return this.userService.updateUser(uid, body);
