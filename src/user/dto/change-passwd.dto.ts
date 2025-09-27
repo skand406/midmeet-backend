@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class ChangePasswdDto {
     @ApiProperty({
-        description: '사용자 ID',
+        description: '사용자의 기존 비밀번호',
         example: 'user1234',
     })
     @IsString()
-    id: string;
+    current_passwd: string;
 
     @ApiProperty({
-        description: '사용자 이메일',
-        example: 'user1234@example.com',
+        description: '사용자의 새로운 비밀번호',
+        example: 'newuser1234',
     })
-    @IsEmail()
-    email: string;
+    @IsString()
+    new_passwd: string;
 }

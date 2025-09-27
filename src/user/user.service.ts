@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 import { FindIdDto } from './dto/find-id.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MailService } from 'src/mail/mail.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -82,5 +83,30 @@ export class UserService {
 
     await this.mail.sendPasswordResetMail(body.email, user.uid);
     return { message: '비밀번호 재설정 메일이 발송되었습니다.' };
+  }
+
+  async changePassword(uid: string, current_passwd: string, new_passwd: string) {
+    const user = await this.prisma.user.findUnique({ where: { uid } });
+    if (!user) {
+      throw new NotFoundException('해당 사용자가 존재하지 않습니다.');
+    }
+    if(current_passwd===new_passwd){
+      throw new ForbiddenException('새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다.');
+    }
+
+    // 현재 비밀번호 확인
+    const isMatch = await bcrypt.compare(current_passwd, user.passwd);
+    if (!isMatch) {
+      throw new ForbiddenException('현재 비밀번호가 일치하지 않습니다.');
+    }
+
+    // 비밀번호 변경    
+    const PasswordHash = await bcrypt.hash(new_passwd, 10);
+    await this.prisma.user.update({
+      where: { uid },
+      data: { passwd: PasswordHash },
+    });
+
+    return { message: '비밀번호가 변경되었습니다.' };
   }
 }

@@ -77,7 +77,7 @@ export class AuthService {
     const { passwordHash, ...safe } = user as any;
     return safe; // {uid, loginId, email, ...}
   }
-
+  //로그인
   async login(dto: LoginDto) {
     try {
       const user = await this.prisma.user.findUnique({ where: { id: dto.id } });
@@ -100,7 +100,7 @@ export class AuthService {
       throw new InternalServerErrorException('Server error during login');
     }
   }
-  // 이메일 인증
+  // 이메일 및 비밀번호 찾기 시 본인 인증
   async verify(token: string, type: 'EMAIL' | 'RESET', passwd?: string) {
     // 토큰 검증
     const record = await this.mail.verifyToken(token, type);
