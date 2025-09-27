@@ -21,7 +21,7 @@ export class UserService {
     const user = await this.prisma.user.findFirst({  where: { email }});
 
     if (!user) {
-          return { id: "일치하는 사용자가 없습니다."};
+          throw new NotFoundException('해당 이메일로 가입된 사용자가 없습니다.');
     }
     return { id: user.id };
   }
@@ -72,5 +72,15 @@ export class UserService {
     });
     await this.mail.sendVerificationMail(email, uid);
     return { message: '이메일 변경 요청이 접수되었습니다. 새로운 이메일로 인증 메일이 발송되었습니다.' };
+  }
+
+  async requestPasswordChange(body: { id: string, email: string }) {
+    const user = await this.prisma.user.findUnique({ where: { id: body.id } });
+    if (!user ) {
+      throw new NotFoundException('해당 사용자 정보가 존재하지 않습니다.');
+    }
+
+    await this.mail.sendPasswordResetMail(body.email, user.uid);
+    return { message: '비밀번호 재설정 메일이 발송되었습니다.' };
   }
 }

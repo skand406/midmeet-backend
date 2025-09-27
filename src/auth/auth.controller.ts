@@ -31,10 +31,15 @@ export class AuthController {
   @Get('verify-email')
   @HttpCode(HttpStatus.OK)
   async verifyEmail(@Query('token') token: string) {
-    await this.authService.verifyEmail(token);
+    await this.authService.verify(token,'EMAIL');
     return { message: '이메일 인증이 완료되었습니다.' };
   }
-
-  // 쿠키 삭제 (로그아웃)
+  // 비밀번호 재설정 메일 전송
+  @Post('verify-reset')
+  @HttpCode(HttpStatus.OK)
+  async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string) {
+    await this.authService.verify(token, 'RESET');
+    return { message: '비밀번호가 재설정되었습니다.'};
+  }
 
 }

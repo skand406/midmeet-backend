@@ -101,15 +101,29 @@ export class AuthService {
     }
   }
   // 이메일 인증
-  async verifyEmail(token: string) {
+  async verify(token: string, type: 'EMAIL' | 'RESET', passwd?: string) {
     // 토큰 검증
-    const record = await this.mail.verifyToken(token, 'EMAIL');  
-
-    await this.prisma.$transaction([
-      this.prisma.user.update({ 
-        where: { uid: record.userUid }, 
-        data: { isVerified: true } }),
-    ]);
+    const record = await this.mail.verifyToken(token, type);
+    if (type === 'EMAIL') {
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { uid: record.userUid },
+          data: { isVerified: true },
+        }),
+      ]);
+    }
+    if (type === 'RESET') {
+      if (!passwd) {
+        throw new BadRequestException('새 비밀번호가 제공되지 않았습니다.');
+      }
+      const passwordHash = await bcrypt.hash(passwd, 10);
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { uid: record.userUid },
+          data: { passwd: passwordHash },
+        }),
+      ]);
+    }
     await this.mail.markUsed(record.id);
 
     return { message: '이메일 인증 완료' };

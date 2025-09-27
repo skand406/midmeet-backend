@@ -38,7 +38,12 @@ export class MailService {
     });
   }
 
-  async sendPasswordResetMail(to: string, link: string) {
+  async sendPasswordResetMail(to: string, uid: string) {
+    const { raw, hash } = this.generateToken();
+    await this.saveToken(uid, 'RESET', hash, 1000 * 60 * 10); // 10분
+    
+    const link = `${process.env.APP_URL}/auth/verify-reset?token=${raw}`;
+
     await this.transporter.sendMail({
       from: `"MidMeet" <${process.env.MAIL_USER}>`,
       to,
@@ -51,6 +56,7 @@ export class MailService {
     });
   }
 
+  //토큰 생성 
   generateToken(){
     const raw = randomBytes(32).toString('hex');
     const hash = createHash('sha256').update(raw).digest('hex');

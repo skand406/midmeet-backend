@@ -6,7 +6,7 @@ import { FindIdDto } from './dto/find-id.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Req } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
-
+import { ChangePasswdDto } from './dto/change-passwd.dto';
 
 @Controller('user')
 export class UserController {
@@ -80,4 +80,9 @@ export class UserController {
     return this.userService.requestEmailChange(uid, email);
   }
 
+  @Post('password-change')
+  async requestPasswordChange(@Body() body: ChangePasswdDto){
+
+    return this.userService.requestPasswordChange(body);  
+  }
 }
