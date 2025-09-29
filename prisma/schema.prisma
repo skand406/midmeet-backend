@@ -57,7 +57,7 @@ model VerificationToken {
 
 
 model Party {
-  party_id   String     @id @db.VarChar(191)
+  party_id   String     @id @default(cuid()) @db.VarChar(191)
   date_time  DateTime?
   party_name String
   party_type PartyType? // DBML에 [not null] 명시가 없어서 optional로 매핑
@@ -68,7 +68,7 @@ model Party {
 }
 
 model Participant {
-  participant_id String        @id @db.VarChar(191)
+  participant_id String        @id @default(cuid()) @db.VarChar(191)
   party_id       String        @db.VarChar(191)
   user_uid       String?       @db.VarChar(191)      // DBML에 not null 아님 → optional
   transport_mode TransportMode?
@@ -89,7 +89,7 @@ model Participant {
 }
 
 model Course {
-  course_id     String   @id @db.VarChar(191)
+  course_id     String   @id @default(cuid()) @db.VarChar(191)
   party_id      String   @db.VarChar(191)
   place_name    String?
   place_address String?
