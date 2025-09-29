@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ForbiddenException, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ForbiddenException, UseGuards, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
 import { PartyService } from './party.service';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
@@ -46,6 +46,31 @@ export class PartyController {
       "message": "모임이 생성되었습니다.",
       "party_id": party.party_id,
     };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Patch('type')
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'JWT 토큰',
+    required: true,
+  })  
+  @ApiBody({
+    type: UpdatePartyDto,
+    description: "모임에서 중간지점을 검색하는 유형",
+  })
+  async updateParty(@Req() req, @Body() updatePartyDto: UpdatePartyDto){
+    const uid = req.user.uid; // JWT에서 유저 추출
+    const user = await this.userService.findById(uid);
+    if(!user){
+      throw new NotFoundException('유효하지 않은 사용자입니다.');
+    }
+    if(!user.isVerified){
+      throw new ForbiddenException('이메일 인증 후 사용이 가능합니다.');
+    }
+    return await this.partyService.updatePartyType(updatePartyDto);
+    
   }
 
   @Get()

@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PartyService {
+  [x: string]: any;
   constructor(private prisma: PrismaService){}
 
   createParty(createPartyDto: CreatePartyDto) {
@@ -18,7 +19,13 @@ export class PartyService {
       },
     });
   }
-
+  updatePartyType(updatePartyDto: UpdatePartyDto) {
+    return this.prisma.party.update({
+      where: { party_id: updatePartyDto.party_id },
+      data: { party_type: updatePartyDto.party_type },
+    });
+  }
+  
   findAll() {
     return `This action returns all party`;
   }
