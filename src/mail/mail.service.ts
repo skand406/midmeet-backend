@@ -24,7 +24,7 @@ export class MailService {
     //DB에 토큰 저장
     await this.saveToken(uid, 'EMAIL', hash, 1000 * 60 * 10); // 10분
     //인증 링크
-    const link = `${process.env.APP_URL}/auth/verify-email?token=${raw}`;
+    const link = `${process.env.BACK_URL}/auth/verify-email?token=${raw}`;
 
     await this.transporter.sendMail({
       from: `"MidMeet" <${process.env.MAIL_USER}>`,
@@ -42,7 +42,7 @@ export class MailService {
     const { raw, hash } = this.generateToken();
     await this.saveToken(uid, 'RESET', hash, 1000 * 60 * 10); // 10분
     
-    const link = `${process.env.APP_URL}/auth/verify-reset?token=${raw}`;
+    const link = `${process.env.FRONT_URL}/Reset-passwd?token=${raw}`;
 
     await this.transporter.sendMail({
       from: `"MidMeet" <${process.env.MAIL_USER}>`,
