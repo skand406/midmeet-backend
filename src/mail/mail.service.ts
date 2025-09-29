@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomBytes,createHash } from 'crypto';
 import * as nodemailer from 'nodemailer';
 import { PrismaService } from '../prisma/prisma.service';
@@ -79,10 +79,10 @@ export class MailService {
     const hash = createHash('sha256').update(raw).digest('hex');
     const record = await this.prisma.verificationToken.findUnique({ where: { token: hash } });
 
-    if (!record) throw new BadRequestException('유효하지 않은 토큰입니다.');
+    if (!record) throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     if (record.type !== type) throw new BadRequestException('토큰 타입 불일치');
-    if (record.expiresAt < new Date()) throw new BadRequestException('토큰 만료됨');
-    if (record.usedAt) throw new BadRequestException('이미 사용된 토큰');
+    if (record.expiresAt < new Date()) throw new ConflictException('토큰 만료됨');
+    if (record.usedAt) throw new GoneException('이미 사용된 토큰');
 
     return record;
   }
