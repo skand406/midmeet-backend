@@ -8,7 +8,8 @@ import { ApiBody, ApiQuery } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService,) {}
+
 
   // 회원가입 + 자동 로그인(쿠키에 JWT 심기)
   @Post('signup')
@@ -46,9 +47,10 @@ export class AuthController {
     example: 'd1f2e3c4b5a697887766554433221100',
     required: true,
   })
-  async verifyEmail(@Query('token') token: string) {
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     await this.authService.verify(token,'EMAIL');
-    return { message: '이메일 인증이 완료되었습니다.' };
+
+    return res.redirect(`${process.env.FRONT_URL}/signup/success/completed`); // 인증 성공 페이지로 리다이렉트
   }
 
   // 비밀번호 재설정 이메일 인증
@@ -74,9 +76,9 @@ export class AuthController {
     description: '새 비밀번호',
     required: true,
   })
-  async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string) {
+  async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string, @Res() res: Response) {
     await this.authService.verify(token, 'RESET', passwd);
-    return { message: '비밀번호가 재설정되었습니다.'};
+    return res.redirect(`${process.env.FRONT_URL}/signup/success/completed`)
   }
 
 }
