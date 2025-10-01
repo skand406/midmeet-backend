@@ -22,7 +22,7 @@ export class UserService {
     const user = await this.prisma.user.findFirst({  where: { email }});
 
     if (!user) {
-          throw new NotFoundException('해당 이메일로 가입된 사용자가 없습니다.');
+      throw new NotFoundException('해당 이메일로 가입된 사용자가 없습니다.');
     }
     return { id: user.id };
   }
@@ -76,9 +76,15 @@ export class UserService {
   }
 
   async requestPasswordChange(body: { id: string, email: string }) {
-    const user = await this.prisma.user.findUnique({ where: { id: body.id } });
+    const user = await this.prisma.user.findFirst({ 
+      where: { 
+        id: body.id,
+        email: body.email,
+      },
+    });
+
     if (!user ) {
-      throw new NotFoundException('해당 사용자 정보가 존재하지 않습니다.');
+      throw new NotFoundException('입력한 아이디와 이메일이 일치하는 사용자가 없습니다.');
     }
 
     await this.mail.sendPasswordResetMail(body.email, user.uid);
