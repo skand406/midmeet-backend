@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { PartyService } from './party.service';
+import { PartyService } from './services/party.service';
 import { PartyController } from './party.controller';
-import { ParticipantModule } from 'src/participant/participant.module';
 import { UserModule } from 'src/user/user.module';
+import { ParticipantService } from './services/participant.service';
+import { CourseService } from './services/course.service';
 
 @Module({
-  imports: [ParticipantModule,UserModule],
+  imports: [UserModule],
   controllers: [PartyController],
-  providers: [PartyService],
+  providers: [PartyService,ParticipantService,CourseService],
 })
 export class PartyModule {}

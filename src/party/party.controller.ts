@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ForbiddenException, UseGuards, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
-import { PartyService } from './party.service';
+import { PartyService } from './services/party.service';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
-import { ParticipantService } from 'src/participant/participant.service';
+import { ParticipantService } from 'src/party/services/participant.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Req } from '@nestjs/common';
-import { ApiBody, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { UserService } from 'src/user/user.service';
 
 @Controller('party')
@@ -19,11 +19,7 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'JWT 토큰',
-    required: true,
-  })
+  @ApiBearerAuth()
   @ApiBody({ 
     type: CreatePartyDto,
     description: "모임 생서에 필요한 정보"
@@ -39,28 +35,29 @@ export class PartyController {
     }
 
     const party = await this.partyService.createParty(createPartyDto);
-    for (let i=0; i<createPartyDto.participant_count; i++){
-      await this.participantService.createParticipant(party.party_id);
-    }
+    await this.participantService.createParticipant(party.party_id, 'LEADER', uid); // 모임 생성자 파티 참가자 테이블에 추가
+
+
     return {
       "message": "모임이 생성되었습니다.",
-      "party_id": party.party_id,
+      "party_id": party.party_id
     };
   }
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @Patch('type')
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'JWT 토큰',
-    required: true,
-  })  
+  @Patch(':party_id')
+  @ApiBearerAuth()
+  @ApiParam({ 
+    name: 'party_id', 
+    required: true, 
+    description: '모임 ID' 
+  })
   @ApiBody({
     type: UpdatePartyDto,
-    description: "모임에서 중간지점을 검색하는 유형",
+    description: "모임 설정 변경에 필요한 정보",
   })
-  async updateParty(@Req() req, @Body() updatePartyDto: UpdatePartyDto){
+  async updateParty(@Req() req, @Body() updatePartyDto: UpdatePartyDto, @Param('party_id') party_id: string) {
     const uid = req.user.uid; // JWT에서 유저 추출
     const user = await this.userService.findById(uid);
     if(!user){
@@ -69,7 +66,7 @@ export class PartyController {
     if(!user.isVerified){
       throw new ForbiddenException('이메일 인증 후 사용이 가능합니다.');
     }
-    return await this.partyService.updatePartyType(updatePartyDto);
+    return await this.partyService.updatePartyType(updatePartyDto, party_id);
     
   }
 

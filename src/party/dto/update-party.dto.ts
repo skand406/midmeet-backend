@@ -1,22 +1,38 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { PartyType } from '@prisma/client'; // Prisma enum import
-import { IsNotEmpty, isNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, isNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdatePartyDto {
-    @IsString()
-    @IsNotEmpty()
-    @ApiProperty({ 
-        description: '파티 ID', 
-        example: 'cmg3qqvk30003vpg05lgpb1tb' 
-    })
-    party_id: string;
-
 
     @IsNotEmpty()
-    @ApiProperty({ 
+    @ApiPropertyOptional({ 
         enum: PartyType,
         description: '파티 유형',
         example: PartyType.AI_COURSE
     })
-    party_type: PartyType;
+    party_type?: PartyType;
+
+    @IsOptional()
+    @IsBoolean()
+    @ApiPropertyOptional({
+        description: '파티 상태 (진행중/종료)',
+        example: true,
+    })
+    party_state?: boolean;
+
+    @IsOptional()
+    @IsDateString()
+    @ApiPropertyOptional({
+        description: '모임 날짜와 시간',
+        example: '2025-10-10T14:00:00Z',
+    })
+    date_time?: Date;
+
+    @IsOptional()
+    @IsString()
+    @ApiPropertyOptional({
+        description: '파티 이름',
+        example: '친구들 점심 모임',
+    })
+    party_name?: string;
 }

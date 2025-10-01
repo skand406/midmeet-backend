@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PartyController } from './party.controller';
-import { PartyService } from './party.service';
+import { PartyService } from './services/party.service';
 
 describe('PartyController', () => {
   let controller: PartyController;

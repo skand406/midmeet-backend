@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePartyDto } from './dto/create-party.dto';
-import { UpdatePartyDto } from './dto/update-party.dto';
-import { PrismaService } from '../prisma/prisma.service';
+import { CreatePartyDto } from '../dto/create-party.dto';
+import { UpdatePartyDto } from '../dto/update-party.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 
 
 
@@ -10,6 +10,7 @@ export class PartyService {
   [x: string]: any;
   constructor(private prisma: PrismaService){}
 
+  //모임 생성
   createParty(createPartyDto: CreatePartyDto) {
     return this.prisma.party.create({
       data:{
@@ -19,10 +20,12 @@ export class PartyService {
       },
     });
   }
-  updatePartyType(updatePartyDto: UpdatePartyDto) {
+
+  //모임 설정 변경 - 파티 유형, 파티 상태, 모임 날짜와 시간, 파티 이름
+  updatePartyType(updatePartyDto: UpdatePartyDto, party_id: string) {
     return this.prisma.party.update({
-      where: { party_id: updatePartyDto.party_id },
-      data: { party_type: updatePartyDto.party_type },
+      where: { party_id: party_id },
+      data: { ...updatePartyDto }, //dto로 받은 값들로 업데이트
     });
   }
   
