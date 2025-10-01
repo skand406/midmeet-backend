@@ -4,7 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { MailModule } from 'src/mail/mail.module';
+import { MailService } from './mail.service';
 
 @Module({
   imports: [
@@ -15,9 +15,9 @@ import { MailModule } from 'src/mail/mail.module';
         signOptions: { expiresIn: process.env.JWT_EXPIRES},
       }),
     }),
-    MailModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, MailService],
+  exports: [MailService],
 })
 export class AuthModule {}

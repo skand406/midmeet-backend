@@ -4,7 +4,7 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from 'src/auth/mail.service';
 
 @Injectable()
 export class AuthService {

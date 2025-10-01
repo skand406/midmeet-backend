@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, NotFoundException, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CheckIdDto } from './dto/check-id.dto';
-import { ApiBody, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FindIdDto } from './dto/find-id.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Req } from '@nestjs/common';
@@ -13,6 +13,7 @@ import { ResetPasswdDto } from './dto/reset-passwd.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
   
+  // ID 중복 확인
   @HttpCode(HttpStatus.OK)
   @Get('check-id')
   @ApiQuery({ 
@@ -25,6 +26,7 @@ export class UserController {
     return this.userService.isCheckIdAvailable(q.id);
   }
 
+  // ID 찾기 (이메일로)
   @HttpCode(HttpStatus.OK)
   @Get('find-id')
   @ApiQuery({ 
@@ -36,28 +38,22 @@ export class UserController {
   async findId(@Query() q: FindIdDto) {
     return this.userService.findId(q.email);
   }
-  
+
+  // 사용자 정보 조회 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Get('user-info')
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'JWT 토큰',
-    required: true,
-  })
+  @ApiBearerAuth()
   async getUserInfo(@Req() req) {
     const uid = req.user.uid; // JWT에서 추출된 값
     return  this.userService.getUserInfo(uid);
   }
+  
   // 사용자 정보 수정 (이메일 인증된 사용자만 가능)
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Patch('user-info')
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'JWT 토큰',
-    required: true,
-  })
+  @ApiBearerAuth()
   async updateUserInfo(@Req() req, @Body() body: UpdateUserDto) {
     const uid = req.user.uid; // JWT에서 추출된 값
     const user = await this.userService.findById(uid);
@@ -75,14 +71,11 @@ export class UserController {
     return this.userService.updateUser(uid, body);
   }
 
+  // 이메일 변경 요청 (이메일 인증된 사용자만 가능)
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('change-email')
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'JWT 토큰',
-    required: true,
-  })
+  @ApiBearerAuth()
   @ApiBody({ 
     schema: {
       type: 'object',
@@ -101,6 +94,7 @@ export class UserController {
     return this.userService.requestEmailChange(uid, email);
   }
 
+  // 비밀번호 재설정 요청 (이메일 인증된 사용자만 가능)
   @Post('reset-password')
   @ApiBody({ 
     type: ResetPasswdDto,
@@ -111,14 +105,11 @@ export class UserController {
     return this.userService.requestPasswordChange(body);  
   }
 
+  // 비밀번호 변경 (현재 비밀번호 + 새 비밀번호) - 로그인된 사용자만 가능
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Patch('change-password')
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'JWT 토큰',
-    required: true,
-  })
+  @ApiBearerAuth()
   @ApiBody({ 
     type: ChangePasswdDto,
     description: '비밀번호 변경을 위한 현재 비밀번호 및 새 비밀번호',
@@ -129,4 +120,15 @@ export class UserController {
     return this.userService.changePassword(uid, body.current_passwd, body.new_passwd);
   }
   
+
+  // 회원 탈퇴
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Delete('delete-user')
+  @ApiBearerAuth()
+  async deleteAccount(@Req() req) {
+    const uid = req.user.uid; // JWT에서 유저 UID 추출
+
+    return this.userService.deleteAccount(uid);
+  }
 }

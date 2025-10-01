@@ -3,7 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 import { FindIdDto } from './dto/find-id.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from 'src/auth/mail.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -108,5 +108,30 @@ export class UserService {
     });
 
     return { message: '비밀번호가 변경되었습니다.' };
+  }
+
+  async deleteAccount(uid: string) {
+    const user = await this.prisma.user.findUnique({ where: { uid } });
+    if (!user) {
+      throw new NotFoundException('해당 사용자가 존재하지 않습니다.');
+    }
+
+    await this.prisma.$transaction(async (prisma) => {
+      const leaderParties = await prisma.participant.findMany({ 
+        where: { user_uid: uid, role: 'LEADER' },
+        select: { party_id: true },
+      });
+      for (const leaderParty of leaderParties) {
+        await prisma.participant.deleteMany({ where: { party_id: leaderParty.party_id } });
+        await prisma.party.delete({ where: { party_id: leaderParty.party_id } });
+      }
+
+      await prisma.participant.deleteMany({ where: { user_uid: uid } });
+      await prisma.verificationToken.deleteMany({ where: { userUid: uid } });
+      // 필요한 다른 관련 데이터 삭제 작업 추가
+      await this.prisma.user.delete({ where: { uid } });
+    });
+    return { message: '회원 탈퇴가 완료되었습니다.' };
+
   }
 }

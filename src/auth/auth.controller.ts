@@ -50,7 +50,8 @@ export class AuthController {
     await this.authService.verify(token,'EMAIL');
     return { message: '이메일 인증이 완료되었습니다.' };
   }
-  // 비밀번호 재설정 메일 전송
+
+  // 비밀번호 재설정 이메일 인증
   @Post('verify-reset')
   @HttpCode(HttpStatus.OK)
   @ApiQuery({ 
