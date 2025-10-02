@@ -5,8 +5,10 @@ import { UpdatePartyDto } from './dto/update-party.dto';
 import { ParticipantService } from 'src/party/services/participant.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserService } from 'src/user/user.service';
+import { CreateCourseArrayDto } from './dto/create-course.dto';
+import { CourseService } from './services/course.service';
 
 @Controller('party')
 export class PartyController {
@@ -14,6 +16,7 @@ export class PartyController {
     private partyService: PartyService,
     private participantService: ParticipantService,
     private userService: UserService,
+    private courseService: CourseService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -36,7 +39,6 @@ export class PartyController {
 
     const party = await this.partyService.createParty(createPartyDto);
     await this.participantService.createParticipant(party.party_id, 'LEADER', uid); // 모임 생성자 파티 참가자 테이블에 추가
-
 
     return {
       "message": "모임이 생성되었습니다.",
@@ -70,7 +72,43 @@ export class PartyController {
     
   }
 
-  @Get()
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post(':party_id/course')
+  @ApiBearerAuth()
+  @ApiParam({ 
+    name: 'party_id', 
+    required: true, 
+    description: '모임 ID' 
+  })
+  @ApiBody({
+    type: CreateCourseArrayDto,
+    description: "모임에 추가할 코스 정보(순서 및 검색 태그)",
+    examples: {
+      example1: {
+        summary: '코스 추가 예시',  
+        value: {
+          courses: [
+            { course_no: 1, tag: "#카페,#디저트,#조용한" },
+            { course_no: 2, tag: "#맛집,#분위기,#조용한" }
+          ]
+        }
+      },
+    },
+  })
+  async createCourse(@Req() req, @Body() createCourseArrayDto: CreateCourseArrayDto, @Param('party_id') party_id: string) {
+    const uid = req.user.uid; // JWT에서 유저 추출
+    const user = await this.userService.findById(uid);
+    if(!user){
+      throw new NotFoundException('유효하지 않은 사용자입니다.');
+    }
+    if(!user.isVerified){
+      throw new ForbiddenException('이메일 인증 후 사용이 가능합니다.');
+    }
+      
+    return await this.courseService.createCourse(party_id, createCourseArrayDto);
+  }
+
   findAll() {
     return this.partyService.findAll();
   }

@@ -98,6 +98,6 @@ model Course {
   course_view   Boolean  @default(true)
 
   party Party @relation(fields: [party_id], references: [party_id])
-
+  @@unique([party_id, course_no])
   @@index([party_id, course_no])
 }

@@ -78,7 +78,7 @@ export class AuthController {
   })
   async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string, @Res() res: Response) {
     await this.authService.verify(token, 'RESET', passwd);
-    return res.redirect(`${process.env.FRONT_URL}/signup/success/completed`)
+    return res.redirect(`${process.env.FRONT_URL}/reset-passwd/success`)
   }
 
 }
