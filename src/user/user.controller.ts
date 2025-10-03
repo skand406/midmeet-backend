@@ -131,4 +131,14 @@ export class UserController {
 
     return this.userService.deleteAccount(uid);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Get('visits')
+  @ApiBearerAuth()
+  async getUserVisits(@Req() req){
+    const uid =req.user.uid;
+
+    return this.userService.getUserVisits(uid);
+  }
 }

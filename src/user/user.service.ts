@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
+
   constructor(
     private prisma: PrismaService,
     private mail: MailService
@@ -139,5 +140,33 @@ export class UserService {
     });
     return { message: '회원 탈퇴가 완료되었습니다.' };
 
+  }
+
+  async getUserVisits(uid: string) {
+    const user = await this.prisma.user.findUnique({where :{ uid },});
+    if(!user){
+      throw new NotFoundException('해당 사용자가 존재하지 않습니다.')
+    }
+
+    const partyIds = await this.prisma.participant.findMany({
+      where:{user_uid: user.uid},
+      select:{party_id: true}
+      });
+    
+    const ids = partyIds.map(p => p.party_id);
+    const parties = await this.prisma.party.findMany({
+      where: { party_id: { in: ids } },
+      include: {
+        courses: {
+          select:{
+            course_id:true,
+            course_no:true,
+            place_name:true,
+            place_address:true,
+          },
+        },
+      }
+    });
+    return parties;
   }
 }
