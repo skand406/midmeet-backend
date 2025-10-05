@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, NotFoundException, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, NotFoundException, ForbiddenException, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CheckIdDto } from './dto/check-id.dto';
-import { ApiBearerAuth, ApiBody, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindIdDto } from './dto/find-id.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Req } from '@nestjs/common';
@@ -22,6 +22,16 @@ export class UserController {
     description: '확인할 사용자 ID',
     example: 'test_id123'
   })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async checkId(@Query() q: CheckIdDto) {
     return this.userService.isCheckIdAvailable(q.id);
   }
@@ -35,6 +45,27 @@ export class UserController {
     description: '알고 싶은 id의 사용자 이메일',
     example: 'test_id123@example.com'
   })
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '해당 이메일로 가입된 사용자가 없습니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async findId(@Query() q: FindIdDto) {
     return this.userService.findId(q.email);
   }
@@ -44,6 +75,37 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @Get('user-info')
   @ApiBearerAuth()
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '해당 사용자가 존재하지 않습니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async getUserInfo(@Req() req) {
     const uid = req.user.uid; // JWT에서 추출된 값
     return  this.userService.getUserInfo(uid);
@@ -54,6 +116,58 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @Patch('user-info')
   @ApiBearerAuth()
+  @ApiResponse({ 
+    status: 408, 
+    description: '이메일 변경 후 이메일 인증을 안 받은 경우', 
+    schema: { 
+      example: { 
+        statusCode: 408, 
+        message: '이메일 인증이 필요합니다.', 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '해당 사용자가 존재하지 않습니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 403, 
+    description: '이메일 인증이 완료되지 않음', 
+    schema: { 
+      example: { 
+        statusCode: 403, 
+        message: '이메일 인증 후에만 정보 수정이 가능합니다.', 
+        error: 'Forbidden' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async updateUserInfo(@Req() req, @Body() body: UpdateUserDto) {
     const uid = req.user.uid; // JWT에서 추출된 값
     const user = await this.userService.findById(uid);
@@ -65,7 +179,7 @@ export class UserController {
       throw new ForbiddenException('이메일 인증 후에만 정보 수정이 가능합니다.');
     }
     if (user.isVerified && user.email !== body.email) {
-      throw new ForbiddenException('이메일 인증이 필요합니다.');
+      throw new HttpException('이메일 인증이 필요합니다.',408);
     }
 
     return this.userService.updateUser(uid, body);
@@ -88,6 +202,26 @@ export class UserController {
     },
     description: '변경할 새로운 이메일 주소',
   })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async requestEmailChange(@Req() req, @Body('email') email: string) {
     const uid = req.user.uid;
 
@@ -96,9 +230,31 @@ export class UserController {
 
   // 비밀번호 재설정 요청 (이메일 인증된 사용자만 가능)
   @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
   @ApiBody({ 
     type: ResetPasswdDto,
     description: '비밀번호 재설정을 위한 사용자 정보',
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '입력한 아이디와 이메일이 일치하는 사용자가 없습니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+    @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
   })
   async resetPassword(@Body() body: ResetPasswdDto){
 
@@ -114,6 +270,57 @@ export class UserController {
     type: ChangePasswdDto,
     description: '비밀번호 변경을 위한 현재 비밀번호 및 새 비밀번호',
   })
+  @ApiResponse({ 
+    status: 411, 
+    description: '현재 비밀번호와 새로운 비밀번호가 같은 경우', 
+    schema: { 
+      example: { 
+        statusCode: 411, 
+        message: '새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다', 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '유효하지 않은 사용자입니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 412, 
+    description: '현재 비밀번호가 저장된 기존 비밀번호와 다른 경우', 
+    schema: { 
+      example: { 
+        statusCode: 412, 
+        message: '현재 비밀번호가 일치하지 않습니다.' 
+      } 
+    }
+  })
   async changePassword(@Req() req,@Body() body: ChangePasswdDto,) {
     const uid = req.user.uid; // JWT에서 유저 UID 추출
 
@@ -126,6 +333,37 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @Delete('delete-user')
   @ApiBearerAuth()
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '유효하지 않은 사용자입니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async deleteAccount(@Req() req) {
     const uid = req.user.uid; // JWT에서 유저 UID 추출
 
@@ -136,6 +374,37 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @Get('visits')
   @ApiBearerAuth()
+  @ApiResponse({ 
+    status: 404, 
+    description: '사용자 정보 없음', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '유효하지 않은 사용자입니다.', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async getUserVisits(@Req() req){
     const uid =req.user.uid;
 

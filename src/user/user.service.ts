@@ -165,6 +165,11 @@ export class UserService {
             place_address:true,
           },
         },
+        participants:{
+          select:{
+            role: true
+          }
+        }
       }
     });
     return parties;

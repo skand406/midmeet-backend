@@ -4,7 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
