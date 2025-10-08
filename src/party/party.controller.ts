@@ -49,7 +49,6 @@ export class PartyController {
     });
 
     return {
-      invite_link: `${process.env.FRONT_URL}/party=${party_id}&token=${token}`,
       token: token,
       expires_in: '7일',
     };
@@ -75,11 +74,6 @@ export class PartyController {
       example: {
         message: '모임이 생성되었습니다.',
         party_id: 'cmg3qqvk',
-        invite: {
-          invite_link: "http://localhost:5173/party=cmghgdy2z0000vpks8u1sstat&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXJ0eV9pZCI6ImNtZ2hnZHkyejAwMDB2cGtzOHUxc3N0YXQiLCJleHAiOjE3NjA1MDAzNzcsImlhdCI6MTc1OTg5NTU3N30.pvX8VERMVt8nA0Kn8NBe3XDhyx7PpeqmpZDDUV4eLyM",
-          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXJ0eV9pZCI6ImNtZ2hnZHkyejAwMDB2cGtzOHUxc3N0YXQiLCJleHAiOjE3NjA1MDAzNzcsImlhdCI6MTc1OTg5NTU3N30.pvX8VERMVt8nA0Kn8NBe3XDhyx7PpeqmpZDDUV4eLyM",
-          expires_in: "7일"
-        } 
       },
     },
   })
@@ -404,5 +398,12 @@ export class PartyController {
     
     await this.participantService.createParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
 
+  }
+
+  @Get(':party_id/waiting')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getParticipantcount(@Param('party_id') party_id:string){
+    return this.partyService.getPgetParticipantcount(party_id);
   }
 }

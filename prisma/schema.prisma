@@ -63,6 +63,7 @@ model Party {
   party_name String
   party_type PartyType? // DBML에 [not null] 명시가 없어서 optional로 매핑
   party_state Boolean    @default(false)
+  participant_count Int?
 
   participants Participant[]
   courses      Course[]

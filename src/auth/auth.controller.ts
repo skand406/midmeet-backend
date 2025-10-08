@@ -104,6 +104,7 @@ export class AuthController {
 
     return res.redirect(`${process.env.FRONT_URL}/signup/success/completed`); // 인증 성공 페이지로 리다이렉트
   }
+  
 
   // 비밀번호 재설정 이메일 인증
   @Post('verify-reset')

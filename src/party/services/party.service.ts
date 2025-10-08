@@ -10,35 +10,24 @@ export class PartyService {
   constructor(private prisma: PrismaService){}
 
   //모임 생성
-  createParty(createPartyDto: CreatePartyDto) {
-    return this.prisma.party.create({
+  async createParty(createPartyDto: CreatePartyDto) {
+    return await this.prisma.party.create({
       data:{
         party_state: true,
         date_time: new Date(createPartyDto.date_time),
         party_name: createPartyDto.party_name,
+        participant_count : createPartyDto.participant_count,
       },
     });
   }
 
   //모임 설정 변경 - 파티 유형, 파티 상태, 모임 날짜와 시간, 파티 이름
-  updatePartyType(updatePartyDto: UpdatePartyDto, party_id: string) {
-    return this.prisma.party.update({
+  async updatePartyType(updatePartyDto: UpdatePartyDto, party_id: string) {
+    return await this.prisma.party.update({
       where: { party_id: party_id },
       data: { ...updatePartyDto }, //dto로 받은 값들로 업데이트
     });
   }
-  
-  // findAll() {
-  //   return `This action returns all party`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} party`;
-  // }
-
-  // update(id: number, updatePartyDto: UpdatePartyDto) {
-  //   return `This action updates a #${id} party`;
-  // }
 
   async remove(party_id: string, uid: string) {
     const participant = await this.prisma.participant.findUnique({
@@ -64,5 +53,19 @@ export class PartyService {
     })
    
     return { message : '모임이 삭제되었습니다.'};
+  }
+
+  async getPgetParticipantcount(party_id:string){
+    const party = await this.prisma.party.findUnique({where : {party_id}})
+    const current_participant_count = await this.prisma.participant.count({where: {party_id}})
+
+    if(!party){
+      throw new NotFoundException('해당 모임을 찾을 수 없습니다.');
+    }
+
+    return { 
+      whole_count: party.participant_count,
+      current_participant_count: current_participant_count
+    }
   }
 }
