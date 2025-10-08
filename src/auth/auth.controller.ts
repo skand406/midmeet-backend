@@ -18,6 +18,16 @@ export class AuthController {
     type: CreateUserDto, 
     description: '회원가입 정보', 
   })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async signup(@Body() dto: CreateUserDto, @Res({ passthrough: true }) res: Response) {
     const { user, token } = await this.authService.signup(dto);
     
@@ -30,6 +40,38 @@ export class AuthController {
   @ApiBody({ 
     type: LoginDto, 
     description: '로그인 정보', 
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: '비밀번호가 다름', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' ,
+        message: 'passwd-Invalid credentials'
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: '존재하는 id가 없음', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' ,
+        message: 'id-Invalid credentials'
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
   })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { user, token } = await this.authService.login(dto);
@@ -46,6 +88,16 @@ export class AuthController {
     description: '이메일 인증 토큰',
     example: 'd1f2e3c4b5a697887766554433221100',
     required: true,
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
   })
   async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     await this.authService.verify(token,'EMAIL');
@@ -75,6 +127,26 @@ export class AuthController {
     },
     description: '새 비밀번호',
     required: true,
+  })
+  @ApiResponse({  
+    status: 400, 
+    description: '새로운 비밀번호가 입력되지 않았을 경우', 
+    schema: { 
+      example: { 
+        statusCode: 400, 
+        message: '새 비밀번호가 제공되지 않았습니다.' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
   })
   async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string, @Res() res: Response) {
     await this.authService.verify(token, 'RESET', passwd);

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePartyDto } from '../dto/create-party.dto';
 import { UpdatePartyDto } from '../dto/update-party.dto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -7,7 +7,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class PartyService {
-  [x: string]: any;
   constructor(private prisma: PrismaService){}
 
   //모임 생성
@@ -41,7 +40,29 @@ export class PartyService {
   //   return `This action updates a #${id} party`;
   // }
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} party`;
-  // }
+  async remove(party_id: string, uid: string) {
+    const participant = await this.prisma.participant.findUnique({
+      where: {
+        party_id_user_uid:{
+          user_uid:uid,
+          party_id:party_id
+        }
+      }
+    }); 
+    const party = await this.prisma.party.findUnique({where: {party_id: party_id}});
+    
+    if (!participant) {
+      throw new NotFoundException('참여 정보를 찾을 수 없습니다.');
+    }
+    if(participant.role !== 'LEADER'){
+      throw new HttpException('삭제 권한이 없는 유저입니다.',406);
+    }
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.course.deleteMany({where : {party_id}}); // 없어도 되지만 명시적으로 작성함
+      await prisma.participant.deleteMany({where:{party_id}});
+      await prisma.party.delete({where:{party_id}})
+    })
+   
+    return { message : '모임이 삭제되었습니다.'};
+  }
 }

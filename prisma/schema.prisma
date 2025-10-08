@@ -23,6 +23,7 @@ enum RoleType {
 enum TransportMode {
   BUS
   SUBWAY
+  CAR
 }
 
 enum PartyType {

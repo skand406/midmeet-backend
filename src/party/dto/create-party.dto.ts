@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsInt, Min } from 'class-validator';
+import { IsString, IsDateString, IsInt, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePartyDto {
@@ -10,8 +10,9 @@ export class CreatePartyDto {
     @IsString()
     party_name: string;  // 모임 이름
 
-    @ApiProperty({ example: 5, description: '인원 수', minimum: 2 })
+    @ApiProperty({ example: 5, description: '인원 수', minimum: 2, maximum:10 })
     @IsInt()
     @Min(2)
+    @Max(10)
     participant_count: number;  // 인원 수
 }

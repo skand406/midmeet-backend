@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -18,6 +18,6 @@ import { MailService } from './mail.service';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, MailService],
-  exports: [MailService],
+  exports: [MailService, JwtModule],
 })
 export class AuthModule {}

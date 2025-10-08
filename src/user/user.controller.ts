@@ -246,7 +246,7 @@ export class UserController {
       } 
     }
   })
-    @ApiResponse({ 
+  @ApiResponse({ 
     status: 500, 
     description: '서버 내부 오류 (DB 문제 등)', 
     schema: { 
