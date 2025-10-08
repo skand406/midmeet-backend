@@ -13,12 +13,22 @@ export class ParticipantService {
   ) {}
   private nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
 
-  async createParticipant(party_id: string, createParticipantDto:createParticipantDto, user_uid: string ) {
+  async createLeaderParticipant(party_id:string, uid:string){
     const code = this.nanoid();
 
-    await this.verifyInviteToken(createParticipantDto.invite_token, party_id);
+    return await this.prisma.participant.create({
+      data:{
+        party_id:party_id,
+        code:code,
+        role : 'LEADER'
+      }
+    })
+  }
 
-    return this.prisma.participant.create({
+  async createMemberParticipant(party_id: string, createParticipantDto:createParticipantDto, user_uid: string ) {
+    const code = this.nanoid();
+
+    return await this.prisma.participant.create({
       data:{
         party_id: party_id,  
         code: code,
@@ -41,8 +51,12 @@ export class ParticipantService {
       if (payload.party_id !== party_id) {
         throw new ForbiddenException('잘못된 초대 링크입니다.');
       }
-
-      return true;
+      const party_name = await this.prisma.party.findUnique({
+                                      where :{party_id},
+                                      select:{party_name:true}
+                                    });
+      
+      return  party_name;
     } catch (err) {
       throw new ForbiddenException('초대 링크가 만료되었거나 유효하지 않습니다.');
     }

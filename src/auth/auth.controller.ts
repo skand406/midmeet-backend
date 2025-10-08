@@ -13,10 +13,14 @@ export class AuthController {
 
   // 회원가입 + 자동 로그인(쿠키에 JWT 심기)
   @Post('signup')
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   @ApiBody({ 
     type: CreateUserDto, 
     description: '회원가입 정보', 
+  })
+  @ApiResponse({
+    status: 200,
+    description:'유저 생성 및 jwt 토큰 생성'
   })
   @ApiResponse({ 
     status: 500, 
@@ -40,6 +44,9 @@ export class AuthController {
   @ApiBody({ 
     type: LoginDto, 
     description: '로그인 정보', 
+  })
+  @ApiResponse({
+    status:200,
   })
   @ApiResponse({ 
     status: 401, 

@@ -4,14 +4,7 @@ import { Type } from "class-transformer";
 import { isEnum, IsEnum, IsNumber, IsString } from "class-validator";
 
 export class createParticipantDto{
-    @ApiProperty({
-        description: 'jwt 초대 토큰',
-        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9....'
 
-    })
-    @IsString()
-    invite_token: string; // JWT 형태의 초대 토큰
-  
     @ApiProperty({
         description:' 이동 수단 선택 (버스 및 자동차)',
         example: 'BUS'

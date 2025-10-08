@@ -9,7 +9,7 @@ import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiQuery, Ap
 import { UserService } from 'src/user/user.service';
 import { CreateCourseArrayDto } from './dto/create-course.dto';
 import { CourseService } from './services/course.service';
-import { STATUS_CODES } from 'http';
+import { get, STATUS_CODES } from 'http';
 import { createParticipantDto } from './dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { error } from 'console';
@@ -60,7 +60,7 @@ export class PartyController {
     description: 'JWT 인증된 사용자가 새로운 모임을 생성합니다. 이메일 인증 완료된 사용자만 가능.',
   })
   @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   @Post()
   @ApiBearerAuth()
   @ApiBody({ 
@@ -130,6 +130,7 @@ export class PartyController {
     }
 
     const party = await this.partyService.createParty(createPartyDto);
+    await this.participantService.createLeaderParticipant(party.party_id,uid);
 
     return {
       "message": "모임이 생성되었습니다.",
@@ -396,7 +397,7 @@ export class PartyController {
   async createPaticipant(@Req() req, @Param('party_id') party_id:string, @Body() createParticipantDto:createParticipantDto){
     const uid = req.user.uid;
     
-    await this.participantService.createParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
+    await this.participantService.createMemberParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
 
   }
 
@@ -405,5 +406,18 @@ export class PartyController {
   @ApiBearerAuth()
   async getParticipantcount(@Param('party_id') party_id:string){
     return this.partyService.getPgetParticipantcount(party_id);
+  }
+
+
+  @Get(':party_id/verify-invite')
+  @ApiBearerAuth()
+  @ApiQuery({
+    name: 'token',
+    required: true,
+    description: '초대 링크 토큰 (쿼리 파라미터로 전달)',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  async verifyInvite(@Param('party_id') party_id:string , @Query('token') token:string){
+    return this.participantService.verifyInviteToken(token,party_id);
   }
 }
