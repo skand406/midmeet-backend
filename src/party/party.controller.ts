@@ -13,6 +13,7 @@ import { get, STATUS_CODES } from 'http';
 import { createParticipantDto } from './dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { error } from 'console';
+import { UpdateParticipantDto } from './dto/update-participant.dto';
 
 @Controller('party')
 export class PartyController {
@@ -38,7 +39,7 @@ export class PartyController {
       } 
     }
   })
-  generateInviteToken(@Param() party_id: string) {
+  generateInviteToken(@Param('party_id') party_id: string) {
     const payload = {
       party_id,
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7일 유효
@@ -410,6 +411,8 @@ export class PartyController {
 
 
   @Get(':party_id/verify-invite')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard) 
   @ApiBearerAuth()
   @ApiQuery({
     name: 'token',
@@ -419,5 +422,19 @@ export class PartyController {
   })
   async verifyInvite(@Param('party_id') party_id:string , @Query('token') token:string){
     return this.participantService.verifyInviteToken(token,party_id);
+  }
+
+  @Patch(':party_id/participant')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard) 
+  @ApiBearerAuth()
+  @ApiBody({
+    type: UpdateParticipantDto,
+    description:'참여자 정보 수정'
+  })
+  async updateParticipant(@Req() req,@Param('party_id') party_id:string, @Body() UpdateParticipantDto:UpdateParticipantDto){
+    const uid = req.user.uid;
+    return this.participantService.updateParticipant(uid,party_id,UpdateParticipantDto);
+
   }
 }

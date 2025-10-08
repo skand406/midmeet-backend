@@ -4,6 +4,7 @@ import { customAlphabet } from 'nanoid';
 import { RoleType } from '@prisma/client';
 import { createParticipantDto } from '../dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateParticipantDto } from '../dto/update-participant.dto';
 
 @Injectable()
 export class ParticipantService {
@@ -32,7 +33,7 @@ export class ParticipantService {
       data:{
         party_id: party_id,  
         code: code,
-        role: createParticipantDto.role,
+        role: 'MEMBER',
         user_uid: user_uid,
         transport_mode : createParticipantDto.transport_mode,
         start_address : createParticipantDto.start_address,
@@ -58,7 +59,7 @@ export class ParticipantService {
       
       return  party_name;
     } catch (err) {
-      throw new ForbiddenException('초대 링크가 만료되었거나 유효하지 않습니다.');
+      throw err;
     }
   }
 
@@ -71,9 +72,18 @@ export class ParticipantService {
   //   return `This action returns a #${id} participant`;
   // }
 
-  // update(id: number, updateParticipantDto: UpdateParticipantDto) {
-  //   return `This action updates a #${id} participant`;
-  // }
+  async updateParticipant(uid:string, party_id:string, updateParticipantDto: UpdateParticipantDto) {
+
+    return await this.prisma.participant.update({
+      where:{party_id_user_uid:{party_id, user_uid:uid}},
+      data: {
+        transport_mode : updateParticipantDto.transport_mode,
+        start_address : updateParticipantDto.start_address,
+        start_lat : updateParticipantDto.start_lat,
+        start_lng : updateParticipantDto.start_lng
+      }
+    });
+  }
 
   // remove(id: number) {
   //   return `This action removes a #${id} participant`;
