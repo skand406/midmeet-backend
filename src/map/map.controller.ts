@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { MapService } from './map.service';
 import { GeocodeRequestDto } from './dto/geocode-request.dto';
 
@@ -7,11 +7,12 @@ export class MapController {
   constructor(private readonly mapService: MapService) {}
 
   @Post('geocode')
+  @HttpCode(HttpStatus.OK)
   async geocodeAddress(@Body() geocodeRequestDto: GeocodeRequestDto) {
-    const { lat, lng } = await this.mapService.getCoordinates(geocodeRequestDto.address);
+    const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(geocodeRequestDto.address);
     
     // ✅ 프론트엔드로 위도/경도 데이터 반환
-    return { lat, lng };
+    return {lat, lng };
   }
 }
 

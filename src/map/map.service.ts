@@ -12,10 +12,9 @@ export class MapService {
   private readonly apiKey = process.env.apiKey;
 
   async getCoordinates(address: string) {
-    const encoded_address = encodeURIComponent(address);
 
     const params = {
-      q: encoded_address,
+      q: address,
       output: 'json',
       epsg: 'epsg:4326',
       domain: process.env.BACK_URL,
@@ -24,6 +23,7 @@ export class MapService {
 
     try{
       const response = await firstValueFrom(this.httpService.get(this.apiUrl,{params}));
+      console.log(response);
       return response.data;
     } catch (err){
       throw err;
