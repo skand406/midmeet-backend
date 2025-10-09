@@ -21,7 +21,8 @@ export class ParticipantService {
       data:{
         party_id:party_id,
         code:code,
-        role : 'LEADER'
+        role : 'LEADER',
+        user_uid: uid
       }
     })
   }

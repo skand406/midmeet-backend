@@ -151,7 +151,7 @@ export class UserService {
     const partyIds = await this.prisma.participant.findMany({
       where:{user_uid: user.uid},
       select:{party_id: true}
-      });
+    });
 
     const ids = partyIds.map(p => p.party_id);
     const parties = await this.prisma.party.findMany({
