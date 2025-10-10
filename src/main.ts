@@ -23,7 +23,7 @@ async function bootstrap() {
 
   // CORS 설정: 다른 도메인(frontend)에서 쿠키를 주고받을 수 있게 함
   app.enableCors({ origin: true, credentials: true });
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 300);
 }
 bootstrap();
   
