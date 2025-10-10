@@ -515,44 +515,44 @@ export class PartyController {
     return this.participantService.verifyInviteToken(token,party_id);
   }
 
-  @Patch(':party_id/participant')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard) 
-  @ApiOperation({summary:'참여자 정보 수정'})
-  @ApiBearerAuth()
-  @ApiBody({
-    type: UpdateParticipantDto,
-    description:'참여자 정보 수정'
-  })
-  @ApiResponse({
-    status:200,
-    description: '참여자 정보 수정 성공',
-    schema: {
-      example: {
-        "participant_id": "cmgkb3nrn0002vpv4c7a5923c",
-        "party_id": "cmgkb3nql0000vpv4f4pngjfj",
-        "user_uid": "cmgi2iz0t0000vpl4ar8agr47",
-        "transport_mode": "PUBLIC",
-        "role": "LEADER",
-        "code": "EYVRZL",
-        "start_lat": "126.699903",
-        "start_lng": "37.426111",
-        "start_address": "인천광역시 연수구 선학로 100"
-      },
-    }
-  })
-  @ApiResponse({ 
-    status: 500, 
-    description: '서버 내부 오류 (DB 문제 등)', 
-    schema: { 
-      example: { 
-        statusCode: 500, 
-        error: 'Internal Server Error' 
-      } 
-    }
-  })  async updateParticipant(@Req() req,@Param('party_id') party_id:string, @Body() UpdateParticipantDto:UpdateParticipantDto){
-    const uid = req.user.uid;
-    return this.participantService.updateParticipant(uid,party_id,UpdateParticipantDto);
+  // @Patch(':party_id/participant')
+  // @HttpCode(HttpStatus.OK)
+  // @UseGuards(JwtAuthGuard) 
+  // @ApiOperation({summary:'참여자 정보 수정'})
+  // @ApiBearerAuth()
+  // @ApiBody({
+  //   type: UpdateParticipantDto,
+  //   description:'참여자 정보 수정'
+  // })
+  // @ApiResponse({
+  //   status:200,
+  //   description: '참여자 정보 수정 성공',
+  //   schema: {
+  //     example: {
+  //       "participant_id": "cmgkb3nrn0002vpv4c7a5923c",
+  //       "party_id": "cmgkb3nql0000vpv4f4pngjfj",
+  //       "user_uid": "cmgi2iz0t0000vpl4ar8agr47",
+  //       "transport_mode": "PUBLIC",
+  //       "role": "LEADER",
+  //       "code": "EYVRZL",
+  //       "start_lat": "126.699903",
+  //       "start_lng": "37.426111",
+  //       "start_address": "인천광역시 연수구 선학로 100"
+  //     },
+  //   }
+  // })
+  // @ApiResponse({ 
+  //   status: 500, 
+  //   description: '서버 내부 오류 (DB 문제 등)', 
+  //   schema: { 
+  //     example: { 
+  //       statusCode: 500, 
+  //       error: 'Internal Server Error' 
+  //     } 
+  //   }
+  // })  async updateParticipant(@Req() req,@Param('party_id') party_id:string, @Body() UpdateParticipantDto:UpdateParticipantDto){
+  //   const uid = req.user.uid;
+  //   return this.participantService.updateParticipant(uid,party_id,UpdateParticipantDto);
 
-  }
+  // }
 }
