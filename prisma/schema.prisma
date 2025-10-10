@@ -21,7 +21,7 @@ enum RoleType {
 }
 
 enum TransportMode {
-  PRIVATE,
+  PRIVATE
   PUBLIC
 }
 
