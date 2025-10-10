@@ -15,6 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { error } from 'console';
 import { UpdateParticipantDto } from './dto/update-participant.dto';
 
+@ApiTags('party')
 @Controller('party')
 export class PartyController {
   constructor(
@@ -25,10 +26,29 @@ export class PartyController {
     private jwtService: JwtService
   ) {}
 
+
   @UseGuards(JwtAuthGuard)
   @Get(':party_id/invite')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '모임 초대 링크',
+    description: '모임 초대 인증용 jwt 토큰 및 인증 기간을 반환'
+  })
   @ApiBearerAuth()
+  @ApiParam({
+    name:'party_id',
+    required:true,
+    description:'모임 id'
+  })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      example: {
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        expires_in: '7일',
+      },
+    }
+  })
   @ApiResponse({ 
     status: 500, 
     description: '서버 내부 오류 (DB 문제 등)', 
@@ -142,6 +162,7 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Patch(':party_id')
+  @ApiOperation({summary:'모임 내용 수정'})
   @ApiBearerAuth()
   @ApiParam({ 
     name: 'party_id', 
@@ -210,6 +231,7 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post(':party_id/course')
+  @ApiOperation({summary:'코스 생성'})
   @ApiBearerAuth()
   @ApiParam({ 
     name: 'party_id', 
@@ -308,6 +330,7 @@ export class PartyController {
   @Delete(':party_id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({summary:'모임 삭제'})
   @ApiBearerAuth()
   @ApiParam({
     name : 'party_id',
@@ -364,6 +387,7 @@ export class PartyController {
   @Post(':party_id/participant')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOperation({summary:'참여자 등록'})
   @HttpCode(HttpStatus.OK)  
   @ApiParam({
     name : 'party_id',
@@ -373,6 +397,21 @@ export class PartyController {
   @ApiBody({
     type: createParticipantDto,
     description: "모임에 참여하는 사람들 초대",
+  })
+  @ApiResponse({
+    status: 200,
+    description: '참여자 등록 성공',
+    schema: {
+      example: {
+        message: '참여자가 성공적으로 등록되었습니다.',
+        participant: {
+          participant_id: 'p123abc',
+          user_uid: 'u456xyz',
+          role: 'MEMBER',
+          transport_mode: 'PUBLIC',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 403,
@@ -405,6 +444,27 @@ export class PartyController {
   @Get(':party_id/waiting')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOperation({summary:'모임별 등록된 참여자 수 '})
+  @ApiResponse({
+    status:200,
+    description:'전체 모임원 및 등록된 모임원 현황을 알려줌',
+    schema:{
+      example: {
+        whole_count: 5,
+        current_participant_count : 3
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
   async getParticipantcount(@Param('party_id') party_id:string){
     return this.partyService.getPgetParticipantcount(party_id);
   }
@@ -413,12 +473,43 @@ export class PartyController {
   @Get(':party_id/verify-invite')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard) 
+  @ApiOperation({summary:'초대 토큰 검증'})
   @ApiBearerAuth()
   @ApiQuery({
     name: 'token',
     required: true,
     description: '초대 링크 토큰 (쿼리 파라미터로 전달)',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  @ApiResponse({
+    status:200,
+    description:'인증되면 모임의 이름을 반환',
+    schema: {
+      example: {
+        party_name: '주말 회식 모임',
+      },
+    }
+  })
+  @ApiResponse({
+    status:403,
+    description: '초대 토큰 인증 실패',
+    schema:{
+      example:{
+        statusCode: 403,
+        error:'Forbidden',
+        message:'잘못된 초대 링크 입니다.'
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
   })
   async verifyInvite(@Param('party_id') party_id:string , @Query('token') token:string){
     return this.participantService.verifyInviteToken(token,party_id);
@@ -427,12 +518,39 @@ export class PartyController {
   @Patch(':party_id/participant')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard) 
+  @ApiOperation({summary:'참여자 정보 수정'})
   @ApiBearerAuth()
   @ApiBody({
     type: UpdateParticipantDto,
     description:'참여자 정보 수정'
   })
-  async updateParticipant(@Req() req,@Param('party_id') party_id:string, @Body() UpdateParticipantDto:UpdateParticipantDto){
+  @ApiResponse({
+    status:200,
+    description: '참여자 정보 수정 성공',
+    schema: {
+      example: {
+        "participant_id": "cmgkb3nrn0002vpv4c7a5923c",
+        "party_id": "cmgkb3nql0000vpv4f4pngjfj",
+        "user_uid": "cmgi2iz0t0000vpl4ar8agr47",
+        "transport_mode": "PUBLIC",
+        "role": "LEADER",
+        "code": "EYVRZL",
+        "start_lat": "126.699903",
+        "start_lng": "37.426111",
+        "start_address": "인천광역시 연수구 선학로 100"
+      },
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })  async updateParticipant(@Req() req,@Param('party_id') party_id:string, @Body() UpdateParticipantDto:UpdateParticipantDto){
     const uid = req.user.uid;
     return this.participantService.updateParticipant(uid,party_id,UpdateParticipantDto);
 

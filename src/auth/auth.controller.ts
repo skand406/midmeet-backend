@@ -4,8 +4,9 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService,) {}
@@ -14,13 +15,29 @@ export class AuthController {
   // 회원가입 + 자동 로그인(쿠키에 JWT 심기)
   @Post('signup')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+	summary: '회원가입',
+	description: '회원가입 후 자동 로그인(JWT 토큰 발급 및 반환)',
+  })
   @ApiBody({ 
     type: CreateUserDto, 
     description: '회원가입 정보', 
   })
   @ApiResponse({
     status: 200,
-    description:'유저 생성 및 jwt 토큰 생성'
+    description:'유저 생성 및 jwt 토큰 생성',
+    schema: {
+      example: {
+        user: {
+          uid: 'u123abc',
+          id: 'test_user',
+          email: 'test@example.com',
+          name: '홍길동',
+          isVerified: false,
+        },
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      },
+    },
   })
   @ApiResponse({ 
     status: 500, 
@@ -41,12 +58,28 @@ export class AuthController {
   // 로그인
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '로그인',
+    description: 'ID와 비밀번호를 사용해 JWT 토큰을 발급받습니다.',
+  })
   @ApiBody({ 
     type: LoginDto, 
     description: '로그인 정보', 
   })
   @ApiResponse({
     status:200,
+    schema: {
+      example: {
+        user: {
+          uid: 'u123abc',
+          id: 'test_user',
+          email: 'test@example.com',
+          name: '홍길동',
+          isVerified: true,
+        },
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+      },
+    }
   })
   @ApiResponse({ 
     status: 401, 
@@ -89,12 +122,25 @@ export class AuthController {
   // 이메일 인증
   @Get('verify-email')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '이메일 인증',
+    description:'회원가입 시 전송된 이메일의 인증 링크를 통해 계정을 활성화합니다.',
+  })
   @ApiQuery({
     name: 'token',
     type: 'string',
     description: '이메일 인증 토큰',
     example: 'd1f2e3c4b5a697887766554433221100',
     required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '이메일 인증 성공 (리다이렉트)',
+    schema: {
+      example: {
+        redirect: `${process.env.FRONT_URL}/signup/success/completed`,
+      },
+    },
   })
   @ApiResponse({ 
     status: 500, 
@@ -116,6 +162,11 @@ export class AuthController {
   // 비밀번호 재설정 이메일 인증
   @Post('verify-reset')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '비밀번호 재설정',
+    description:
+      '비밀번호 재설정 메일의 링크를 통해 새 비밀번호를 설정합니다.',
+  })
   @ApiQuery({ 
     name: 'token', 
     type: 'string',
@@ -135,6 +186,15 @@ export class AuthController {
     },
     description: '새 비밀번호',
     required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '비밀번호 재설정 성공 (리다이렉트)',
+    schema: {
+      example: {
+        redirect: `${process.env.FRONT_URL}/reset-passwd/success`,
+      },
+    },
   })
   @ApiResponse({  
     status: 400, 

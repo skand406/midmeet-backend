@@ -6,10 +6,9 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PartyModule } from './party/party.module';
 import { CourseService } from './party/services/course.service';
-import { MapModule } from './map/map.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UserModule, PartyModule, MapModule],
+  imports: [PrismaModule, AuthModule, UserModule, PartyModule],
   controllers: [AppController],
   providers: [AppService, CourseService],
 })

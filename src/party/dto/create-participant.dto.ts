@@ -7,33 +7,33 @@ export class createParticipantDto{
 
     @ApiProperty({
         description:' 이동 수단 선택 (버스 및 자동차)',
-        example: 'BUS'
+        example: 'PUBLIC'
     })
     @IsEnum(TransportMode)
     transport_mode : TransportMode;
 
-    @ApiProperty({
-        description: '사용자 역할',
-        example: 'LEADER'
-    })
-    @IsEnum(RoleType)
-    role : RoleType;
+    // @ApiProperty({
+    //     description: '사용자 역할',
+    //     example: 'LEADER'
+    // })
+    // @IsEnum(RoleType)
+    // role : RoleType;
     
-    @ApiProperty({
-        description: '출발지의 위도',
-        example: '37.450354677762'
-    })
-    @Type(() => Number)
-    @IsNumber()
-    start_lat : number;
+    // @ApiProperty({
+    //     description: '출발지의 위도',
+    //     example: '37.450354677762'
+    // })
+    // @Type(() => Number)
+    // @IsNumber()
+    // start_lat : number;
 
-    @ApiProperty({
-        description: '출발지의 경도',
-        example: '126.65915614333'
-    })
-    @Type(() => Number)
-    @IsNumber()
-    start_lng : number;
+    // @ApiProperty({
+    //     description: '출발지의 경도',
+    //     example: '126.65915614333'
+    // })
+    // @Type(() => Number)
+    // @IsNumber()
+    // start_lng : number;
 
     @ApiProperty({
         description: '출발지 한글 주소',

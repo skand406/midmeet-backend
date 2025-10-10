@@ -5,12 +5,14 @@ import { RoleType } from '@prisma/client';
 import { createParticipantDto } from '../dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateParticipantDto } from '../dto/update-participant.dto';
+import { MapService } from 'src/party/services/map.service';
 
 @Injectable()
 export class ParticipantService {
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private mapService: MapService
   ) {}
   private nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
 
@@ -29,6 +31,7 @@ export class ParticipantService {
 
   async createMemberParticipant(party_id: string, createParticipantDto:createParticipantDto, user_uid: string ) {
     const code = this.nanoid();
+    const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(createParticipantDto.start_address);
 
     return await this.prisma.participant.create({
       data:{
@@ -38,8 +41,8 @@ export class ParticipantService {
         user_uid: user_uid,
         transport_mode : createParticipantDto.transport_mode,
         start_address : createParticipantDto.start_address,
-        start_lat : createParticipantDto.start_lat,
-        start_lng : createParticipantDto.start_lng
+        start_lat : lat,
+        start_lng : lng
       },
     });
   }
@@ -74,14 +77,15 @@ export class ParticipantService {
   // }
 
   async updateParticipant(uid:string, party_id:string, updateParticipantDto: UpdateParticipantDto) {
+    const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(updateParticipantDto.start_address);
 
     return await this.prisma.participant.update({
       where:{party_id_user_uid:{party_id, user_uid:uid}},
       data: {
         transport_mode : updateParticipantDto.transport_mode,
         start_address : updateParticipantDto.start_address,
-        start_lat : updateParticipantDto.start_lat,
-        start_lng : updateParticipantDto.start_lng
+        start_lat : lat,
+        start_lng : lng
       }
     });
   }
