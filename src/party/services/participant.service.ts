@@ -33,35 +33,28 @@ export class ParticipantService {
     const code = this.nanoid();
     const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(createParticipantDto.start_address);
 
-    const participant_leader = await this.prisma.participant.findUnique({
-      where: { party_id_user_uid: { party_id, user_uid } },
-    });
 
-    if(!participant_leader){
-      return await this.prisma.participant.update({
-        where:{party_id_user_uid:{party_id, user_uid}},
-        data: {
-          transport_mode : createParticipantDto.transport_mode,
-          start_address : createParticipantDto.start_address,
-          start_lat : lat,
-          start_lng : lng
-        } 
-      });
-    }
-    else{
-      return await this.prisma.participant.create({
-        data:{
-          party_id: party_id,  
-          code: code,
-          role: 'MEMBER',
-          user_uid: user_uid,
-          transport_mode : createParticipantDto.transport_mode,
-          start_address : createParticipantDto.start_address,
-          start_lat : lat,
-          start_lng : lng
-        },
-      });
-    }
+    const participant =  await this.prisma.participant.upsert({
+      where: { party_id_user_uid: { party_id, user_uid } },
+      update: {
+        transport_mode: createParticipantDto.transport_mode,
+        start_address: createParticipantDto.start_address,
+        start_lat: lat,
+        start_lng: lng,
+      },
+      create: {
+        party_id,
+        code,
+        role: 'MEMBER',
+        user_uid,
+        transport_mode: createParticipantDto.transport_mode,
+        start_address: createParticipantDto.start_address,
+        start_lat: lat,
+        start_lng: lng,
+      },
+    });
+    console.log(participant)
+    return participant;
   }
 
   async verifyInviteToken(token: string, party_id: string) {

@@ -403,12 +403,15 @@ export class PartyController {
     description: '참여자 등록 성공',
     schema: {
       example: {
-        message: '참여자가 성공적으로 등록되었습니다.',
         participant: {
           participant_id: 'p123abc',
           user_uid: 'u456xyz',
           role: 'MEMBER',
           transport_mode: 'PUBLIC',
+          code: '0ZIWT4',
+          start_lat: 126.699903,
+          start_lng: 37.426111,
+          start_address: '인천광역시 연수구 선학로 100'
         },
       },
     },
@@ -437,7 +440,7 @@ export class PartyController {
   async createPaticipant(@Req() req, @Param('party_id') party_id:string, @Body() createParticipantDto:createParticipantDto){
     const uid = req.user.uid;
     
-    await this.participantService.createMemberParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
+    return await this.participantService.createMemberParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
 
   }
 
