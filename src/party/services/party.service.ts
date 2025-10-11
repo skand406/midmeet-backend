@@ -17,6 +17,7 @@ export class PartyService {
         date_time: new Date(createPartyDto.date_time),
         party_name: createPartyDto.party_name,
         participant_count : createPartyDto.participant_count,
+        party_type:createPartyDto.party_type
       },
     });
   }

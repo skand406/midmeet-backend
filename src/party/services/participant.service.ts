@@ -59,6 +59,7 @@ export class ParticipantService {
 
   async verifyInviteToken(token: string, party_id: string) {
     try {
+      
       const payload = this.jwtService.verify(token, {
         secret: process.env.INVITE_SECRET,
       });
@@ -70,7 +71,7 @@ export class ParticipantService {
                                       where :{party_id},
                                       select:{party_name:true}
                                     });
-      
+      //console.log(party_name)
       return  party_name;
     } catch (err) {
       throw err;
