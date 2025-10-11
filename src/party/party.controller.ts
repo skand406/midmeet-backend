@@ -469,7 +469,7 @@ export class PartyController {
     }
   })
   async getParticipantcount(@Param('party_id') party_id:string){
-    return this.partyService.getPgetParticipantcount(party_id);
+    return this.partyService.getParticipantcount(party_id);
   }
 
 

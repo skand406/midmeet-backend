@@ -2,12 +2,16 @@ import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePartyDto } from '../dto/create-party.dto';
 import { UpdatePartyDto } from '../dto/update-party.dto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserService } from 'src/user/user.service';
 
 
 
 @Injectable()
 export class PartyService {
-  constructor(private prisma: PrismaService){}
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService
+  ){}
 
   //모임 생성
   async createParty(createPartyDto: CreatePartyDto) {
@@ -53,10 +57,10 @@ export class PartyService {
       await prisma.party.delete({where:{party_id}})
     })
    
-    return { message : '모임이 삭제되었습니다.'};
+    return this.userService.getUserVisits(uid);
   }
 
-  async getPgetParticipantcount(party_id:string){
+  async getParticipantcount(party_id:string){
     const party = await this.prisma.party.findUnique({where : {party_id}})
     const current_participant_count = await this.prisma.participant.count({where: {party_id}})
 

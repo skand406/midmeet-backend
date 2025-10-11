@@ -10,7 +10,7 @@ import { MapService } from './services/map.service';
 import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [UserModule, JwtModule, HttpModule],
+  imports: [UserModule, JwtModule, HttpModule, UserModule],
   controllers: [PartyController],
   providers: [PartyService,ParticipantService,CourseService,MapService],
 })
