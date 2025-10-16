@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ForbiddenException, UseGuards, HttpCode, HttpStatus, NotFoundException, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ForbiddenException, UseGuards, HttpCode, HttpStatus, NotFoundException, Query, HttpException } from '@nestjs/common';
 import { PartyService } from './services/party.service';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
@@ -286,13 +286,12 @@ export class PartyController {
     }
   })
   @ApiResponse({ 
-    status: 403, 
+    status: 406, 
     description: '이메일 인증이 완료되지 않음', 
     schema: { 
       example: { 
-        statusCode: 403, 
+        statusCode: 406, 
         message: '이메일 인증 후 사용이 가능합니다.', 
-        error: 'Forbidden' 
       } 
     }
   })
@@ -347,16 +346,44 @@ export class PartyController {
       } 
     }
   })
+  @ApiResponse({ 
+    status: 403, 
+    description: '권한이 없는 사용자', 
+    schema: { 
+      example: { 
+        statusCode: 403, 
+        message: '권한이 없는 사용자입니다.', 
+        error: 'forbidden' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 407, 
+    description: '파티에 참여하지 않은 사용자', 
+    schema: { 
+      example: { 
+        statusCode: 407, 
+        message: '참여자 정보를 찾을 수 없습니다.', 
+      } 
+    }
+  })
   async createCourse(@Req() req, @Body() createCourseArrayDto: CreateCourseArrayDto, @Param('party_id') party_id: string) {
     const uid = req.user.uid; // JWT에서 유저 추출
     const user = await this.userService.findById(uid);
+    const participant = await this.participantService.findOne(uid,party_id);
+
     if(!user){
       throw new NotFoundException('유효하지 않은 사용자입니다.');
     }
     if(!user.isVerified){
-      throw new ForbiddenException('이메일 인증 후 사용이 가능합니다.');
+      throw new HttpException('이메일 인증 후 사용이 가능합니다.',406);
     }
-      
+    if(!participant){
+      throw new HttpException('참여자 정보를 찾을 수 없습니다.',407);
+    }
+    if(participant.role !== 'LEADER'){
+      throw new ForbiddenException('권한이 없는 사용자입니다.');
+    }
     return await this.courseService.createCourse(party_id, createCourseArrayDto);
   }
   

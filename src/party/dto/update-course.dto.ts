@@ -10,28 +10,28 @@ export class UpdateCourseDto{
         description:'장소 이름(상호명)'
     })
     @IsString()
-    place_name:string;
+    place_name?:string;
 
     @ApiProperty({
         example:'인천 연수구 학나래로6번길 35 1층 신부산갈매기',
         description:'장소의 주소(도로명주소)'
     })
     @IsString()
-    place_address:string;
+    place_address?:string;
 
     @ApiProperty({
         example:1,
         description:'코스 순서'
     })
     @IsNumber()
-    course_no:number;
+    course_no?:number;
 
     @ApiProperty({
         example:true,
         description:'코스가 보이고 안보이고 상태를 표시[true/false]'
     })
     @IsBoolean()
-    course_view:boolean;
+    course_view?:boolean;
 }
 
 export class UpdateCourseArrayDto{
