@@ -14,6 +14,8 @@ import { createParticipantDto } from './dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { error } from 'console';
 import { UpdateParticipantDto } from './dto/update-participant.dto';
+import { UpdateCourseArrayDto, UpdateCourseDto } from './dto/update-course.dto';
+import { PARAMTYPES_METADATA } from '@nestjs/common/constants';
 
 @ApiTags('party')
 @Controller('party')
@@ -89,7 +91,7 @@ export class PartyController {
     description: "모임 생서에 필요한 정보"
   })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: '모임 생성 성공',
     schema: {
       example: {
@@ -173,6 +175,21 @@ export class PartyController {
     type: UpdatePartyDto,
     description: "모임 설정 변경에 필요한 정보",
   })
+  @ApiResponse({
+    status:200,
+    description:'업데이트 된 코스의 내용을 반환',
+    schema:{
+      example:{
+        "course_id": "cmgk7skfi0003p5nk51pjk991",
+        "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+        "place_name": '신부산갈매기',
+        "place_address": '인천 연수구 학나래로6번길 35 1층 신부산갈매기',
+        "course_no": 1,
+        "tag": "일식, 카페",
+        "course_view": true
+      },
+    }
+  })
   @ApiResponse({ 
     status: 403, 
     description: '이메일 인증이 완료되지 않음', 
@@ -241,6 +258,32 @@ export class PartyController {
   @ApiBody({
     type: CreateCourseArrayDto,
     description: "모임에 추가할 코스 정보(순서 및 검색 태그)",
+  })
+  @ApiResponse({
+    status:200,
+    description:'',
+    schema:{
+      example: [
+        {
+          "course_id": "cmgk7skfi0003p5nk51pjk991",
+          "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+          "place_name": null,
+          "place_address": null,
+          "course_no": 1,
+          "tag": "일식, 카페",
+          "course_view": true
+        },
+        {
+          "course_id": "cmgk7skfi0004p5nkizu99hmq",
+          "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+          "place_name": null,
+          "place_address": null,
+          "course_no": 2,
+          "tag": "한식, 분식, 디저트",
+          "course_view": true
+        },
+      ],
+    }
   })
   @ApiResponse({ 
     status: 403, 
@@ -316,7 +359,191 @@ export class PartyController {
       
     return await this.courseService.createCourse(party_id, createCourseArrayDto);
   }
+  
+  @UseGuards(JwtAuthGuard)
+  @Patch(':party_id/courseArray')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({summary:'코스 수정 : 모임이 ai 타입일때 코스 장소를 배열 형태로 한번에 선택 후 저장'})
+  @ApiBearerAuth()
+  @ApiParam({
+    name:'party_id',
+    description:'모임 id'
+  })
+  @ApiBody({type:UpdateCourseArrayDto })
+  @ApiResponse({
+    status:200,
+    description:'',
+    schema:{
+      example: [
+        {
+          "course_id": "cmgk7skfi0003p5nk51pjk991",
+          "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+          "place_name": null,
+          "place_address": null,
+          "course_no": 1,
+          "tag": "일식, 카페",
+          "course_view": true
+        },
+        {
+          "course_id": "cmgk7skfi0004p5nkizu99hmq",
+          "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+          "place_name": null,
+          "place_address": null,
+          "course_no": 2,
+          "tag": "한식, 분식, 디저트",
+          "course_view": true
+        },
+      ],
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 403, 
+    description: 'participant의 role이 leader가 아님', 
+    schema: { 
+      example: { 
+        statusCode: 403, 
+        message: '권한이 없는 사용자입니다.', 
+        error: 'Forbidden' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'participant 테이블에서 리턴되는 값 없음.', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '참여자 정보를 찾을 수 없습니다..', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
+  async updateCourseArray(@Req() req, @Body() updateCourseArrayDto:UpdateCourseArrayDto,@Param('party_id') party_id:string){
+    const uid = req.user.uid;
 
+    const participant = await this.participantService.findOne(uid,party_id);
+    if(!participant){
+      throw new NotFoundException('참여자 정보를 찾을 수 없습니다.');
+    }
+    if(participant.role !== 'LEADER'){
+      throw new ForbiddenException('권한이 없는 사용자입니다.');
+    }
+
+    return await this.courseService.updateArrayCourse(party_id,updateCourseArrayDto);
+  }
+
+  @Patch(':party_id/course/:course_id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({summary:'코스 수정: 모임이 사용자 지정 타입일 때 각 단일 코스를 수정'})
+  @ApiBearerAuth()
+  @ApiParam({
+    name:'course_id',
+    description:'코스 id',
+  })
+  @ApiParam({
+    name:'party_id',
+    description:'파티 id'
+  })
+  @ApiBody({type:UpdateCourseDto})
+  @ApiResponse({
+    status:200,
+    description:'',
+    schema:{
+      example: [
+        {
+          "course_id": "cmgk7skfi0003p5nk51pjk991",
+          "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+          "place_name": null,
+          "place_address": null,
+          "course_no": 1,
+          "tag": "일식, 카페",
+          "course_view": true
+        },
+        {
+          "course_id": "cmgk7skfi0004p5nkizu99hmq",
+          "party_id": "cmgk7skam0000p5nkt2iqkr8b",
+          "place_name": null,
+          "place_address": null,
+          "course_no": 2,
+          "tag": "한식, 분식, 디저트",
+          "course_view": true
+        },
+      ],
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'JWT 토큰 오류', 
+    schema: { 
+      example: { 
+        statusCode: 401, 
+        error: 'Unauthorized' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 403, 
+    description: 'participant의 role이 leader가 아님', 
+    schema: { 
+      example: { 
+        statusCode: 403, 
+        message: '권한이 없는 사용자입니다.', 
+        error: 'Forbidden' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'participant 테이블에서 리턴되는 값 없음.', 
+    schema: { 
+      example: { 
+        statusCode: 404, 
+        message: '참여자 정보를 찾을 수 없습니다..', 
+        error: 'Not Found' 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: '서버 내부 오류 (DB 문제 등)', 
+    schema: { 
+      example: { 
+        statusCode: 500, 
+        error: 'Internal Server Error' 
+      } 
+    }
+  })
+  async updateCourse(@Req() req, @Body() updateCourseDto:UpdateCourseDto, @Param('course_id') course_id: string,@Param('party_id') party_id:string){
+    const uid = req.user.uid;
+    const participant = await this.participantService.findOne(uid,party_id);
+    if(!participant){
+      throw new NotFoundException('참여자 정보를 찾을 수 없습니다.');
+    }
+    if(participant.role !== 'LEADER'){
+      throw new ForbiddenException('권한이 없는 사용자입니다.');
+    }
+    return await this.courseService.updateCourse(party_id, course_id,updateCourseDto);
+  }
   // findAll() {
   //   return this.partyService.findAll();
   // }
@@ -558,4 +785,6 @@ export class PartyController {
   //   return this.participantService.updateParticipant(uid,party_id,UpdateParticipantDto);
 
   // }
+
+
 }

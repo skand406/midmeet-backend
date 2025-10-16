@@ -16,6 +16,7 @@ export class CreateCourseArrayDto {
     map(arg0: (course: any) => { party_id: string; course_no: any; tag: any; }): any {
         throw new Error('Method not implemented.');
     }
+    
     @ApiProperty({
         description: '코스 목록 배열',
         example: {

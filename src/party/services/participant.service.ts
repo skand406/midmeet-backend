@@ -83,9 +83,11 @@ export class ParticipantService {
   //   return `This action returns all participant`;
   // }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} participant`;
-  // }
+  async findOne(uid: string, party_id:string) {
+    return await this.prisma.participant.findUnique({
+      where:{party_id_user_uid:{party_id,user_uid:uid}}
+    })
+  }
 
   async updateParticipant(uid:string, party_id:string, updateParticipantDto: UpdateParticipantDto) {
     const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(updateParticipantDto.start_address);
