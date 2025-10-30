@@ -2,7 +2,7 @@ import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePartyDto } from '../dto/create-party.dto';
 import { UpdatePartyDto } from '../dto/update-party.dto';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../../user/user.service';
 
 
 

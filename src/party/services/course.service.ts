@@ -36,20 +36,21 @@ export class CourseService {
   }
 
   async updateArrayCourse(party_id:string, updateCourseArrayDto:UpdateCourseArrayDto){
+
     await this.prisma.$transaction(
-          updateCourseArrayDto.courses.map((course) =>
-            this.prisma.course.update({
-              where: {
-                party_id_course_no:{party_id,course_no:course.course_no}
-              },
-              data: {
-                place_address: course.place_address,
-                place_name: course.place_name,
-                course_view: course.course_view,
-              },
-            }),
-          ),
-        );
+      updateCourseArrayDto.courses.map((course) =>
+        this.prisma.course.update({
+          where: {
+            party_id_course_no:{party_id,course_no:course.course_no}
+          },
+          data: {
+            place_address: course.place_address,
+            place_name: course.place_name,
+            course_view: course.course_view,
+          },
+        }),
+      ),
+    );
     return await this.prisma.course.findMany({
       where:{party_id}
     })

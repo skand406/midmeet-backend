@@ -1,11 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { customAlphabet } from 'nanoid';
+import { PrismaService } from '../../prisma/prisma.service';
 import { RoleType } from '@prisma/client';
 import { createParticipantDto } from '../dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateParticipantDto } from '../dto/update-participant.dto';
-import { MapService } from 'src/party/services/map.service';
+import { MapService } from '../../party/services/map.service';
 
 @Injectable()
 export class ParticipantService {
@@ -14,10 +13,9 @@ export class ParticipantService {
     private jwtService: JwtService,
     private mapService: MapService
   ) {}
-  private nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
 
   async createLeaderParticipant(party_id:string, uid:string){
-    const code = this.nanoid();
+    const code = 'ABCDEFG';
 
     return await this.prisma.participant.create({
       data:{
@@ -30,7 +28,7 @@ export class ParticipantService {
   }
 
   async createMemberParticipant(party_id: string, createParticipantDto:createParticipantDto, user_uid: string ) {
-    const code = this.nanoid();
+    const code = 'ABCDEFG';
     const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(createParticipantDto.start_address);
 
 
