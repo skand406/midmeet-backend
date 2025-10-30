@@ -166,13 +166,18 @@ export class UserService {
           },
         },
         participants:{
-          where: {user_uid: uid},
           select:{
+            user_uid:true,
             role: true
           }
         }
       }
     });
-    return parties;
+    const result = parties.map((party) => ({
+      ...party,
+      myRole: party.participants.find((p) => p.user_uid === uid)?.role || null,
+    }));
+
+    return result;
   }
 }
