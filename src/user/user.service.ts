@@ -166,6 +166,7 @@ export class UserService {
           },
         },
         participants:{
+          where: {user_uid: uid},
           select:{
             role: true
           }

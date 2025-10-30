@@ -400,6 +400,35 @@ export class UserController {
   @Get('visits')
   @ApiBearerAuth()
   @ApiOperation({ summary: '방문 기록 조회', description: '로그인한 유저가 참여한 모임 및 모임에 포함된 코스 조회' })
+  @ApiResponse({
+    status:200,
+    description:'성공',
+    schema:{
+      example:[{
+        "party_id": "cmgtfzmtj0003vpowoef9o917",
+        "date_time": "2025-12-31T18:30:00.000Z",
+        "party_name": "테스트용 모임",
+        "party_type": "AI_COURSE",
+        "party_state": true,
+        "participant_count": 5,
+        "courses": [{
+          "course_id": "cmgtaojsk0007vp3k82lqsnkl",
+          "course_no": 1,
+          "place_name": "신부산갈매기",
+          "place_address": "인천 연수구 학나래로6번길 35 1층 신부산갈매기"
+        },
+        {
+          "course_id": "cmgtaojsk0008vp3k11176ng8",
+          "course_no": 2,
+          "place_name": "송탄식당 인천선학점",
+          "place_address": "인천 연수구 학나래로118번길 45 1층"
+        }],
+        "participants": [{
+          "role": "LEADER"
+        }]
+    },]
+    }
+  })
   @ApiResponse({ 
     status: 404, 
     description: '사용자 정보 없음', 
