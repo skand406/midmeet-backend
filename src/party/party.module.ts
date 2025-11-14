@@ -13,5 +13,11 @@ import { HttpModule } from '@nestjs/axios';
   imports: [UserModule, JwtModule, HttpModule, UserModule],
   controllers: [PartyController],
   providers: [PartyService,ParticipantService,CourseService,MapService],
+  exports: [
+    ParticipantService, // OtpModule에서 필요한 서비스
+    PartyService,
+    CourseService,
+    MapService,
+  ],
 })
 export class PartyModule {}

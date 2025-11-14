@@ -29,7 +29,7 @@ export class ParticipantService {
 
   async createMemberParticipant(party_id: string, createParticipantDto:createParticipantDto, user_uid: string ) {
     const code = 'ABCDEFG';
-    const { EPSG_4326_X: lat, EPSG_4326_Y: lng } = await this.mapService.getCoordinates(createParticipantDto.start_address);
+    const { EPSG_4326_X: lng, EPSG_4326_Y: lat } = await this.mapService.getCoordinates(createParticipantDto.start_address);
 
 
     const participant =  await this.prisma.participant.upsert({
