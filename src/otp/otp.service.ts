@@ -16,7 +16,7 @@ export class OtpService {
     private prismaService:PrismaService,
     private httpService:HttpService,
     ){}
-
+  // 테스트 코드
   async testOTPConnection() {
       try {
           const res = await this.httpService.axiosRef.get(
@@ -58,35 +58,47 @@ export class OtpService {
       throw err;
     }
   }
-  
-  /* 중앙 좌표 */
-  private async getCenter(party_id: string) {
-    const participant_list = await this.prismaService.participant.findMany({ where: { party_id } });
-
-    const points = participant_list
-      .filter(p => p.start_lat !== null && p.start_lng !== null)
-      .map((p) => turf.point([Number(p.start_lng), Number(p.start_lat)]));
-
-    const center_point = turf.center(turf.featureCollection(points)).geometry.coordinates;
-    return [center_point[1], center_point[0]];
+  //공통 코드
+   /*시간 변환 */
+  private getIsoTime(date?: string) {
+    const now = date ? new Date(date) : new Date();
+    now.setHours(8, 0, 0, 0);
+    return now.toISOString().replace('Z', '+09:00');
   }
-  
 
-  /* 참여자 이동시간 중 최댓값 */
-  private async getDurationTime(party_id: string) {
+  /* mode 변환 */
+  private getMode(m: TransportMode) {
+    return m === 'PUBLIC' ? 'WALK,TRANSIT' : 'CAR';
+  }
+
+  /* 공통 사용 데이터 */
+  private async PartyData(party_id: string) {
     const party = await this.prismaService.party.findUnique({ where: { party_id } });
-    if (!party) throw new NotFoundException('파티가 존재하지 않습니다.');
+    if (!party) throw new NotFoundException('파티 없음');
+
+    const participants = await this.prismaService.participant.findMany({ where: { party_id } });
+
+    if (participants.length === 0) throw new NotFoundException('참여자 없음');
 
     const date_time = `${party.date_time}`;
-    const participant_list = await this.prismaService.participant.findMany({ where: { party_id } });
+    const points = participants
+      .filter(p => p.start_lat !== null && p.start_lng !== null)
+      .map((p) => turf.point([Number(p.start_lng), Number(p.start_lat)]));
+    const [center_lng, center_lat] = turf.center(turf.featureCollection(points)).geometry.coordinates;
 
-    const [center_lat, center_lng] = await this.getCenter(party_id);
+    const maxTime = await this.getMaxDurationTime(participants, center_lat, center_lng ,date_time);
 
+    return { participants, date_time, center_lat, center_lng, maxTime };
+  }
+
+
+  /* 참여자 이동시간 중 최댓값 */
+  private async getMaxDurationTime(participants,center_lat:number, center_lng:number,date_time:string) {
     const times = await Promise.all(
-      participant_list.map(async (p) => {
+      participants.map(async (p) => {
         const mode = this.getMode(p.transport_mode||"PUBLIC");
         const result = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${center_lat},${center_lng}`,mode,date_time);
-        return result.plan.itineraries[0].duration
+        return result.plan.itineraries[0].duration;
       }));
     return Math.max(...times);
   }
@@ -139,13 +151,13 @@ export class OtpService {
 
   /* 모든 참여자의 등시선 */
   async getMidMeet(party_id: string) {
-    const participant_list = await this.prismaService.participant.findMany({ where: { party_id } });
-    const middle = await this.getDurationTime(party_id); // 🔥 1번만 계산
-    const cutoff = `${Math.floor(middle / 60)}M`;
+    const {participants, date_time, center_lat, center_lng, maxTime} = await this.PartyData(party_id);
+
+    const cutoff = `${Math.floor(maxTime / 60)}M`;
     const time = this.getIsoTime();
 
     const iso_list = await Promise.all(
-      participant_list.map(async (p) => {
+      participants.map(async (p) => {
         const mode = this.getMode(p.transport_mode||"PUBLIC")
         const data = await this.getIsochrone(cutoff,`${p.start_lat},${p.start_lng}`,mode, time)
         return data;
@@ -165,7 +177,7 @@ export class OtpService {
     }
     if (intersection) return intersection;
 
-    const [center_lat, center_lng] = await this.getCenter(party_id);
+    const {participants, date_time, center_lat, center_lng, maxTime} = await this.PartyData(party_id);
     return (await this.getIsochrone('10M', `${center_lat},${center_lng}`, 'CAR', this.getIsoTime())).features[0];
   }
 
@@ -196,19 +208,16 @@ export class OtpService {
   }
   /* 최종 중간지점 */
   async getMidPoint(party_id: string) {
-    const party = await this.prismaService.party.findUnique({ where: { party_id } });
-    if(!party) throw new NotFoundException('파티가 존재하지 않습니다.');
+    const {participants, date_time, center_lat, center_lng, maxTime} = await this.PartyData(party_id);
 
-    const date = `${party.date_time}`;
-    const participant_list = await this.prismaService.participant.findMany({ where: { party_id } });
     const stops = await this.getSubwayList(party_id);
 
     const results = await Promise.all(
       stops.map(async (stop) => {
         const times = await Promise.all(
-          participant_list.map(async (p) =>{
+          participants.map(async (p) =>{
             const mode = this.getMode(p.transport_mode||"PUBLIC");
-            const time = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${stop.lat},${stop.lon}`,mode,date);            
+            const time = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${stop.lat},${stop.lon}`,mode,date_time);            
             if (!time.plan || !time.plan.itineraries?.length) return Infinity;
 
             return time.plan.itineraries[0].duration;
@@ -222,29 +231,5 @@ export class OtpService {
 
     return results.sort((a, b) => a.avg - b.avg)[0];
   }
-  private getIsoTime(date?: string) {
-    const now = date ? new Date(date) : new Date();
-    now.setHours(8, 0, 0, 0);
-    return now.toISOString().replace('Z', '+09:00');
-  }
-
-  /* mode 변환 */
-  private getMode(m: TransportMode) {
-    return m === 'PUBLIC' ? 'WALK,TRANSIT' : 'CAR';
-  }
-  
-  // private async loadContext(party_id: string) {
-  //   const party = await this.prismaService.party.findUnique({ where: { party_id } });
-  //   if (!party) throw new NotFoundException('파티 없음');
-
-  //   const participants = await this.prismaService.participant.findMany({ where: { party_id } });
-
-  //   if (participants.length === 0)
-  //     throw new NotFoundException('참여자 없음');
-
-  //   const date_time = `${party.date_time}`;
-  //   const center = this.getCenter(participants);
-
-  //   return { party, participants, date_time, center };
-  // }
+ 
 }
