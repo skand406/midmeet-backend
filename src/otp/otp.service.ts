@@ -9,6 +9,8 @@ import * as fs from 'fs';
 import { RouteVisualizerService } from './route-visualizer.service'; // 경로 맞게
 import csv from 'csv-parser';
 import * as path from 'path';
+import Flatbush from 'flatbush';
+import geokdbush from 'geokdbush';
 
 @Injectable()
 export class OtpService {
@@ -168,6 +170,7 @@ export class OtpService {
 
   /* 교차 영역 */
   async getCrossMid(party_id: string) {
+    const all_stops = await this.loadSubwayStops();
     const list = await this.getMidMeet(party_id);
     let intersection:Feature<Polygon | MultiPolygon, GeoJsonProperties> | null = turf.multiPolygon([list[0].features[0].geometry.coordinates[0]]);
     
@@ -175,26 +178,41 @@ export class OtpService {
       if (!intersection) break;
       intersection = turf.intersect(turf.featureCollection([intersection, turf.multiPolygon([list[i].features[0].geometry.coordinates[0]])]));
     }
-    if (intersection) return intersection;
-
+    if (intersection) {
+      const stops = await this.getSubwayList(intersection);
+      if(stops.length===0){
+        const [center_lng, center_lat] = turf.centerOfMass(intersection).geometry.coordinates;
+        return this.getNearPoint(all_stops,center_lat,center_lng);
+      }
+      return  await this.getMidPoint(party_id, stops);
+    }
+    
     const {participants, date_time, center_lat, center_lng, maxTime} = await this.PartyData(party_id);
-    return (await this.getIsochrone('10M', `${center_lat},${center_lng}`, 'CAR', this.getIsoTime())).features[0];
+
+    return this.getNearPoint(all_stops,center_lat,center_lng);
+  }
+  
+  /*중심점으로부터 제일 가까운 장소 */
+  private getNearPoint(stops:any[],center_lat:number,center_lng:number){
+    const fc = turf.featureCollection(
+        stops.map(p =>
+          turf.point([p.lon, p.lat], p) // properties에 p 전체를 넣음
+        )
+      );
+      return turf.nearestPoint([center_lng, center_lat], fc).properties;
   }
 
-
-
   /* 교차영역 내 지하철 후보 */
-  async getSubwayList(party_id: string) {
-    const poly = await this.getCrossMid(party_id);
+  async getSubwayList(intersection: Feature<Polygon | MultiPolygon, GeoJsonProperties>) {
     const stops = await this.loadSubwayStops();
-    const result = stops.filter(s => turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), poly));
+    const result = stops.filter(s => turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), intersection));
     return result;
   }
   /* 지하철역 로딩 */
   private async loadSubwayStops():Promise<{ id: string; name: string; lat: number; lon: number }[]> {
     return new Promise(resolve => {
       const stops: any[] = [];
-      fs.createReadStream(path.resolve(__dirname, './stops.txt'))
+      fs.createReadStream(path.resolve(process.cwd(), 'src/otp/stops.txt'))
         .pipe(csv())
         .on('data', r =>
           stops.push({ 
@@ -207,11 +225,8 @@ export class OtpService {
     }); 
   }
   /* 최종 중간지점 */
-  async getMidPoint(party_id: string) {
+  async getMidPoint(party_id:string, stops: any[]) {
     const {participants, date_time, center_lat, center_lng, maxTime} = await this.PartyData(party_id);
-
-    const stops = await this.getSubwayList(party_id);
-
     const results = await Promise.all(
       stops.map(async (stop) => {
         const times = await Promise.all(
