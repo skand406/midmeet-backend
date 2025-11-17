@@ -7,6 +7,14 @@ import { JwtService } from '@nestjs/jwt';
 import { MapService } from '../party/services/map.service';
 import { RouteVisualizerService } from './route-visualizer.service';
 
+jest.mock('kdbush', () => {
+  return jest.fn().mockImplementation(() => ({}));
+});
+
+jest.mock('geokdbush', () => ({
+  around: jest.fn().mockReturnValue([0])
+}));
+
 describe('OtpService', () => {
   let service: OtpService;
   jest.setTimeout(300000);
@@ -25,7 +33,7 @@ describe('OtpService', () => {
   it('should be defined', async () => {
 
     //const result = await service.test(37.504322,126.76354,'PT30M');
-    const result = await service.getMidPoint('cmgtgcvde0000vprgzmvixr3m');
+    const result = await service.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
     //const result = await service.loadSubwayStops();
     //const result = await service.getIsochrone('PT30M','37.504322,126.76354','CAR','');
     //const result = await service.getRoute('37.504322,126.76354','37.4564,126.7052','CAR','2025-11-14');

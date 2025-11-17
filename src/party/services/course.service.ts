@@ -70,4 +70,9 @@ export class CourseService {
       where:{party_id}
     })
   }
+
+  async findCourseList(party_id:string){
+    const course_list = await this.prisma.course.findMany({where:{party_id}});
+    
+  }
 }

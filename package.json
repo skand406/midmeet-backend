@@ -38,6 +38,9 @@
     "cookie-parser": "^1.4.7",
     "csv-parser": "^3.2.0",
     "ejs": "^3.1.10",
+    "flatbush": "^4.5.0",
+    "geokdbush": "^2.0.1",
+    "kdbush": "^4.0.2",
     "nanoid": "^5.1.6",
     "nodemailer": "^7.0.6",
     "passport": "^0.7.0",
@@ -91,6 +94,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!kdbush)/"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

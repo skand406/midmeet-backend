@@ -63,14 +63,16 @@ describe('OtpService Isochrone', () => {
     //     console.warn(`Isochrone failed for ${c.name}:`, (e as Error).message);
     //   }
     // }
-    const test = await service.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
-    if(!test) {
+    const test = await service.getMidMeet('cmgtgcvde0000vprgzmvixr3m');
+    const intersection = turf.intersect(turf.featureCollection([turf.multiPolygon([test[0].features[0].geometry.coordinates[0]]),turf.multiPolygon([test[1].features[0].geometry.coordinates[0]])]));
+    
+    if(!intersection) {
       console.log("테스트 실패");
       return "";
     }
     
     //const gj = await service.test(c.lat,c.lon, cutoff);
-    layers.push({ name: 'name', color: '#e91e63', geojson: turf.featureCollection([test]) });
+    layers.push({ name: 'name', color: '#e91e63', geojson: turf.featureCollection([intersection]) });
     ensureOutputDir();
 
     // ✅ 결과 저장
