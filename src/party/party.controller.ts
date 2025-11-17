@@ -154,7 +154,6 @@ export class PartyController {
 
     const party = await this.partyService.createParty(createPartyDto);
     await this.participantService.createLeaderParticipant(party.party_id,uid);
-
     return {
       "message": "모임이 생성되었습니다.",
       "party_id": party.party_id,

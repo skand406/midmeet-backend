@@ -8,10 +8,17 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { MapService } from './services/map.service';
 import { HttpModule } from '@nestjs/axios';
+import { OtpModule } from 'src/otp/otp.module';
 
 @Module({
   imports: [UserModule, JwtModule, HttpModule, UserModule],
   controllers: [PartyController],
   providers: [PartyService,ParticipantService,CourseService,MapService],
+  exports: [
+    ParticipantService, // OtpModule에서 필요한 서비스
+    PartyService,
+    CourseService,
+    MapService,
+  ],
 })
 export class PartyModule {}

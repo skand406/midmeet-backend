@@ -24,7 +24,7 @@ export class UpdateCourseDto{
         description:'코스 순서'
     })
     @IsNumber()
-    course_no?:number;
+    course_no:number;
 
     @ApiProperty({
         example:true,
@@ -35,7 +35,7 @@ export class UpdateCourseDto{
 }
 
 export class UpdateCourseArrayDto{
-    map(arg0: (course: any) => {course_id:string; place_name:any; place_address:any; course_view:any;}): any{
+    map(arg0: (course: any) => {party_id:string,course_no:number; place_name:any; place_address:any; course_view:any;}): any{
         throw new Error('Method not implemented.');
     }
 
