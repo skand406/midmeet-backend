@@ -8,7 +8,6 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { MapService } from './services/map.service';
 import { HttpModule } from '@nestjs/axios';
-import { OtpModule } from 'src/otp/otp.module';
 
 @Module({
   imports: [UserModule, JwtModule, HttpModule, UserModule],

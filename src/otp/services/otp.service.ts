@@ -1,12 +1,11 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpServer, Injectable, NotFoundException } from '@nestjs/common';
 import * as turf from '@turf/turf';
-import { PrismaService } from '../prisma/prisma.service';
-import { ParticipantService } from '../party/services/participant.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { ParticipantService } from '../../party/services/participant.service';
 import { Party, TransportMode } from '@prisma/client';
 import { Feature, Polygon, MultiPolygon, FeatureCollection, GeoJsonProperties } from 'geojson'; // ✅ 타입 전용
 import * as fs from 'fs';
-import { RouteVisualizerService } from './route-visualizer.service'; // 경로 맞게
 import csv from 'csv-parser';
 import * as path from 'path';
 import Flatbush from 'flatbush';
@@ -18,6 +17,38 @@ export class OtpService {
     private prismaService:PrismaService,
     private httpService:HttpService,
     ){}
+    async getPlan() {
+  const query = `
+    query {
+      plan(
+        from: { lat: 37.5665, lon: 126.9780 }
+        to:   { lat: 37.5700, lon: 126.9920 }
+        dateTime: "2025-11-17T09:00:00"
+        transportModes: [
+          { mode: BUS }
+          { mode: WALK }
+          { mode: SUBWAY }
+        ]
+      ) {
+        itineraries {
+          duration
+          legs {
+            mode
+            distance
+          }
+        }
+      }
+    }
+  `;
+
+  const res = await this.httpService.axiosRef.post(
+    `${process.env.OTP_URL}/otp/index/graphql`,
+    { query },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+
+  return res.data.data.plan;
+}
   // 테스트 코드
   async testOTPConnection() {
       try {

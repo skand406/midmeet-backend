@@ -2,6 +2,7 @@ import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { CreateCourseArrayDto } from '../dto/create-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCourseArrayDto, UpdateCourseDto } from '../dto/update-course.dto';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class CourseService {
@@ -18,7 +19,7 @@ export class CourseService {
         data: createCourseArrayDto.courses.map(course => ({
           party_id: party_id,
           course_no: course.course_no,
-          tag: course.tag,
+          tag: instanceToPlain(course.tag),
         })),
       });
 
@@ -71,8 +72,5 @@ export class CourseService {
     })
   }
 
-  async findCourseList(party_id:string){
-    const course_list = await this.prisma.course.findMany({where:{party_id}});
-    
-  }
+
 }

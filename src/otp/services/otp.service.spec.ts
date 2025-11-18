@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { OtpService } from './otp.service';
+import { OtpService } from './services/otp.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpModule } from '@nestjs/axios';
 import { ParticipantService } from '../party/services/participant.service';

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OtpController } from './otp.controller';
-import { OtpService } from './otp.service';
+import { OtpService } from './services/otp.service';
 
 describe('OtpController', () => {
   let controller: OtpController;
