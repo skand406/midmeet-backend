@@ -73,4 +73,9 @@ export class PartyService {
       current_participant_count: current_participant_count
     }
   }
+
+  async getParty(party_id:string){
+    return await this.prisma.party.findUnique({where : {party_id}})
+
+  }
 }

@@ -47,6 +47,8 @@ export class CourseService {
           data: {
             place_address: course.place_address,
             place_name: course.place_name,
+            place_lat:course.place_lat,
+            place_lng: course.place_lng,
             course_view: course.course_view,
           },
         }),
@@ -72,5 +74,7 @@ export class CourseService {
     })
   }
 
-
+  async getCourseList(party_id){
+    return await this.prisma.course.findMany({where:{party_id}});
+  }
 }

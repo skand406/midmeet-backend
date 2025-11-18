@@ -32,6 +32,23 @@ export class UpdateCourseDto{
     })
     @IsBoolean()
     course_view?:boolean;
+
+    @ApiProperty({
+        example:'37.450354677762',
+        description:'장소의 위도'
+    })
+    @IsNumber()
+    @Type(() => Number)
+    place_lat?:number;
+
+    @ApiProperty({
+        example:'126.65915614333',
+        description:'장소의 경도'
+    })
+    @IsNumber()
+    @Type(() => Number)
+    place_lng?:number;
+
 }
 
 export class UpdateCourseArrayDto{

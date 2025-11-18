@@ -812,5 +812,16 @@ export class PartyController {
 
   // }
 
-
+  @Get('/:party_id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard) 
+  @ApiBearerAuth()
+  async findParty(@Param('party_id') party_id:string ){
+    //const uid = req.user.uid;
+    const party = await this.partyService.getParty(party_id);
+    const course_list = await this.courseService.getCourseList(party_id);
+    
+    //길찾기 
+    return {party,course_list};
+  }
 }
