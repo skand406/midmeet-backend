@@ -57,7 +57,7 @@ export class PartyController {
     private otpService: OtpService,
     private kakaoService: KakaoService,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @Get(':party_id/invite')
@@ -94,11 +94,11 @@ export class PartyController {
   generateInviteToken(@Param('party_id') party_id: string) {
     const payload = {
       party_id,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7일 유효
+      //exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7일 유효
     };
 
     const token = this.jwtService.sign(payload, {
-      secret: process.env.INVITE_SECRET,
+      expiresIn: '7d', // '7d' = 7일, v9에서 안전
     });
 
     return {
