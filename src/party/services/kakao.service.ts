@@ -37,22 +37,18 @@ async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code
   return res.data.documents;
 }
 
-  async findCustomCoursePlaces(party_id:string, course_id:string, place_lat?:number, place_lng?:number){
+  async findCustomCoursePlaces(party_id:string, course_id:string, place_lat:number, place_lng:number){
     const course = await this.prisma.course.findUnique({ where:{course_id}});
     if(!course) throw new NotFoundException('코스가 존재하지 않습니다.');
     
     const courseTag = course.tag as unknown as CourseTag;
 
-    let targetLat = place_lat ?? 0;
-    let targetLng = place_lng ?? 0;
+    let targetLat = place_lat ;
+    let targetLng = place_lng ;
     let radius = 500;
 
-    if (course.course_no === 1) {
-      //const {lat, lng} = await this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
-      targetLat = 37.41618//lat;
-      targetLng = 126.88447//lon;
-      radius = 1000;
-    }
+    if (course.course_no === 1) radius = 1000;
+  
     //console.log(courseTag);
     const places: any[] =[];
 
@@ -74,106 +70,124 @@ async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code
     return r;
   }
 
-  // async findAICoursePlaces(party_id: string) {
-  //   // 1. 파티 코스 전체 가져오기
-  //   const course_list= await this.prisma.course.findMany({
-  //     where: { party_id },
-  //     orderBy: { course_no: 'asc' },
-  //   });
+  async findAICoursePlaces(party_id: string) {
+    const course_list = await this.prisma.course.findMany({
+      where: { party_id },
+      orderBy: { course_no: 'asc' },
+    });
 
-  //   const results:any[] = [];
-    
-    
-  //   // 초기 탐색 좌표
-  //   let seedPoints:{ lat: number; lng: number }[] = [];//await this.otpService.getCrossMid(party_id);
-  //   let radius = 1000;
+    // 🔥 기준별 결과 저장
+    let seedDistance: { lat: number; lng: number }[] = [];
+    let seedAccuracy: { lat: number; lng: number }[] = [];
+    let seedDiversity: { lat: number; lng: number }[] = [];
 
-  //   for (const course of course_list) {
-  //     const courseTag = course.tag as unknown as CourseTag;
-  //     const collected:any[] = [];
+    const resultDistance:any[] = [];
+    const resultAccuracy:any[] = [];
+    const resultDiversity :any[]= [];
 
-  //     // seedPoints 세팅 (최초 1회)
-  //     if (seedPoints.length === 0) {
-  //       const { lat, lng } = await this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
-  //       seedPoints.push({ lat, lng });
-  //     }
+    // 최초 seed 좌표 = mid point
+    const { lat: midLat, lng: midLng } = await this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
+    //37.41618,126.88447,1000
+    seedDistance = [{ lat: midLat, lng: midLng }];
+    seedAccuracy = [{ lat: midLat, lng: midLng }];
+    seedDiversity = [{ lat: midLat, lng: midLng }];
 
-  //     // 🔥 seedPoint 각각으로 검색 수행
-  //     for (const pt of seedPoints) {
-  //       const places :any[]= [];
+    let radius = 1000;
 
-  //       for (const keyword of courseTag.primaryQueries) {
-  //         const res = await this.kakaoSearch(keyword,pt.lat,pt.lng,radius,courseTag.category,'accuracy');
-  //         places.push(...res);
-  //       }
+    for (const course of course_list) {
+      const tag = course.tag as unknown as CourseTag
 
-  //       // 중복 제거
-  //       const uniqueMap = new Map();
-  //       for (const p of places) uniqueMap.set(p.id, p);
-  //       const uniqueList = Array.from(uniqueMap.values());
+      /** -------------------------
+       * 1) 거리순 탐색(distance)
+       --------------------------*/
+      const pickDist  = await this.searchAndPickOne(
+        tag,
+        seedDistance[0],
+        radius,
+        'distance'
+      );
+      resultDistance.push(pickDist);
+      seedDistance = [{ lat: Number(pickDist.y), lng: Number(pickDist.x) }];
 
-  //       collected.push(...uniqueList);
-  //     }
 
-  //     // 🔥 거리순 / 인기순 / 다양성 기준 3개씩 선택
-  //     const distanceTop3 = this.pickByDistance(collected);
-  //     const popularityTop3 = this.pickByPopularity(collected);
-  //     const diversityTop3 = this.pickByDiversity(collected);
+      /** -------------------------
+       * 2) 인기순 탐색(accuracy)
+       --------------------------*/
+      const pickAcc = await this.searchAndPickOne(
+        tag,
+        seedAccuracy[0],
+        radius,
+        'accuracy'
+      );
+      resultAccuracy.push(pickAcc);
+      seedAccuracy = [{ lat: Number(pickAcc.y), lng: Number(pickAcc.x) }];
 
-  //     results.push({
-  //       course_no: course.course_no,
-  //       distance: distanceTop3,
-  //       popularity: popularityTop3,
-  //       diversity: diversityTop3,
-  //     });
 
-  //     // 🔥 다음 탐색을 위한 seedPoints 갱신
-  //     seedPoints = diversityTop3.map(p => ({
-  //       lat: Number(p.y),
-  //       lng: Number(p.x),
-  //     }));
+      /** -------------------------
+       * 3) 분산 탐색(diversity)
+       --------------------------*/
+      const pickDiv = await this.searchAndPickDiversity(
+        tag,
+        seedDiversity[0],
+        radius
+      );
+      resultDiversity.push(pickDiv);
+      seedDiversity = [{ lat: Number(pickDiv.y), lng: Number(pickDiv.x) }];
 
-  //     radius = 500; // 이후엔 좁게 탐색
-  //   }
+      radius = 500; // 이후 탐색 radius 감소
+    }
 
-  //   return results;
-  // }
-  // // 🔥 거리순
-  // private pickByDistance(list: any[]) {
-  //   return [...list]
-  //     .sort((a, b) => Number(a.distance) - Number(b.distance))
-  //     .slice(0, 3);
-  // }
+    return {
+      distance: resultDistance,
+      accuracy: resultAccuracy,
+      diversity: resultDiversity,
+    };
+  }
 
-  // // 🔥 인기순 (카카오 accuracy 결과 그대로)
-  // private pickByPopularity(list: any[]) {
-  //   return list.slice(0, 3);
-  // }
+  private async searchAndPickOne(tag: CourseTag,seed: { lat: number; lng: number },radius: number,sortType: 'accuracy' | 'distance') {
+    const { lat, lng } = seed;
+    const places: any[] = [];
 
-  // // 🔥 다양성(분산도)
-  // private pickByDiversity(list: any[]) {
-  //   const picked: any[] = [];
-  //   const threshold = 80; // 최소 거리 (m)
+    for (const keyword of tag.primaryQueries) {
+      const res = await this.kakaoSearch(keyword, lat, lng, radius, tag.category, sortType);
+      places.push(...res);
+    }
 
-  //   for (const place of list) {
-  //     // 첫 번째는 무조건 선택
-  //     if (picked.length === 0) {
-  //       picked.push(place);
-  //       continue;
-  //     }
+    const unique = Array.from(new Map(places.map(p => [p.id, p])).values());
+    if (unique.length === 0) throw new Error("검색 결과 없음");
 
-  //     // 거리 분산 체크
-  //     const isFar = picked.every(p => {
-  //       const dx = Number(p.x) - Number(place.x);
-  //       const dy = Number(p.y) - Number(place.y);
-  //       const dist = Math.sqrt(dx * dx + dy * dy) * 88000; // degree → meter 변환
-  //       return dist > threshold;
-  //     });
+    return unique[0]; // 🔥 Top1 반환
+  }
+  private async searchAndPickDiversity(tag: CourseTag,seed: { lat: number; lng: number },radius: number) {
+    const { lat, lng } = seed;
+    const places: any[] = [];
 
-  //     if (isFar) picked.push(place);
-  //     if (picked.length === 3) break;
-  //   }
+    // accuracy 우선 정렬로 가져오되 분산 기준 선택
+    for (const keyword of tag.primaryQueries) {
+      const res = await this.kakaoSearch(keyword, lat, lng, radius, tag.category, 'accuracy');
+      places.push(...res);
+    }
 
-  //   return picked;
-  // }
+    const unique = Array.from(new Map(places.map(p => [p.id, p])).values());
+    if (unique.length === 0) {
+      if (places.length > 0) return places[0];  
+    }
+    let best = unique[0];
+    let bestDist = -1;
+
+    for (const place of unique) {
+      const dx = Number(place.x) - lng;
+      const dy = Number(place.y) - lat;
+      const dist = Math.sqrt(dx * dx + dy * dy) * 88000; // meter
+
+      if (dist > bestDist) {
+        bestDist = dist;
+        best = place;
+      }
+    }
+
+    return best;
+  }
+
+
 }

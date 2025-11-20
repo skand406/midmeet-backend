@@ -816,11 +816,11 @@ export class PartyController {
 
   // }
 
-  @Get(':party_id')
+  @Get(':party_id/result')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard) 
   @ApiBearerAuth()
-  async findParty(@Req() req,@Param('party_id') party_id:string ){
+  async findResultPage(@Req() req,@Param('party_id') party_id:string ){
     const uid = req.user.uid;
     const party = await this.partyService.readParty(party_id);
     const course_list = await this.courseService.readCourseList(party_id);
@@ -832,13 +832,29 @@ export class PartyController {
     const date_time=`${party?.date_time}`;
     const mode = participant?.transport_mode || 'PUBLIC';
     const route = await this.otpService.getRoute(from,to,mode,date_time);
-    return {party,courses:course_list,route};
+    return {party,course_list,route};
   }
 
-  @Get(':party_id/:course_id')
-  async getCourseList(@Param('party_id') party_id:string,@Param('course_id') course_id:string,  @Query('lat') lat?: number,@Query('lng') lng?: number,){
+  @Get(':party_id/mid')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard) 
+  @ApiBearerAuth()
+  async findMidPage(@Req() req,@Param('party_id') party_id:string,@Param('course_id') course_id:string, ){
+    const uid = req.user.uid;
     const party = await this.partyService.readParty(party_id);
-    //if(party?.party_type==='AI_COURSE') return await this.kakaoService.findAICoursePlaces(party_id);
+    const course_list = await this.courseService.readCourseList(party_id);
+    const participant = await this.participantService.findOne(uid,party_id);
+    //길찾기 
+
+    const midpoint = await this.otpService.getCrossMid(party_id);
+    if(party?.party_type==='AI_COURSE') return await this.kakaoService.findAICoursePlaces(party_id);
+
+    const list = await this.kakaoService.findCustomCoursePlaces(party_id,course_id,midpoint.lat,midpoint.lng);
+    return {party,course_list,list};
+  }
+  @Get(':party_id/:course_id')
+  async getCourseList(@Param('party_id') party_id:string,@Param('course_id') course_id:string, @Query('lat') lat: number,@Query('lng') lng: number,){
+    const party = await this.partyService.readParty(party_id);
 
     return await this.kakaoService.findCustomCoursePlaces(party_id,course_id,lat,lng);
   }

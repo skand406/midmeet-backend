@@ -13,9 +13,9 @@ export class OtpController {
   @Get()
   async otpTest() {
 
-    //return this.kakaoService.findAICoursePlaces('cmi4fbmmu0000p5a8veh4fjca');
+    return this.kakaoService.findAICoursePlaces('cmi4fbmmu0000p5a8veh4fjca');
     //return this.kakaoService.findCustomCoursePlaces('cmgtao6uo0004vp3kd1s7b3x7','cmgtaojsk0007vp3k82lqsnkl')
-    return this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
+    //return this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
   }
 
   @Get('/kakao')
