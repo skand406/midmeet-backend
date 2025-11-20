@@ -1,6 +1,7 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { OtpService } from './services/otp.service';
 import { KakaoService } from './services/kakao.service';
+import { MapService } from './services/map.service';
 
 
 @Controller('otp')
@@ -8,12 +9,13 @@ export class OtpController {
   constructor(
     private readonly otpService: OtpService,
     private kakaoService:KakaoService,
+    private mapService:MapService
   ) {}
 
   @Get()
   async otpTest() {
-
-    return this.kakaoService.findAICoursePlaces('cmi4fbmmu0000p5a8veh4fjca');
+    return this.mapService.getCoordinates('인천 미추홀구 경원대로 715');
+    //return this.kakaoService.findAICoursePlaces('cmi4fbmmu0000p5a8veh4fjca');
     //return this.kakaoService.findCustomCoursePlaces('cmgtao6uo0004vp3kd1s7b3x7','cmgtaojsk0007vp3k82lqsnkl')
     //return this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
   }

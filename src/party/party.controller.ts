@@ -864,13 +864,14 @@ export class PartyController {
         courseNo: c.course_no,
         courseId: c.course_id,
         places: {
-          placeId: list[idx]?.id,
-          placeName: list[idx]?.place_name,
-          placeAddr: list[idx]?.address,
-          lat: Number(list[idx].y),
-          lng: Number(list[idx].x),
+          placeId: '',
+          placeName: c.place_name??'',
+          placeAddr: c.place_address??'',
+          lat:c.place_lat??0,
+          lng:c.place_lng??0
         }
-      }))}
+      }))},
+      list
     }
   }
 
