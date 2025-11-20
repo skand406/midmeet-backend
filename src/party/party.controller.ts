@@ -697,8 +697,10 @@ export class PartyController {
   })
   async createPaticipant(@Req() req, @Param('party_id') party_id:string, @Body() createParticipantDto:createParticipantDto){
     const uid = req.user.uid;
-    
-    return await this.participantService.createMemberParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
+    const participant = await this.participantService.createMemberParticipant(party_id, createParticipantDto, uid); // 모임 생성자 파티 참가자 테이블에 추가
+    const party = await this. partyService.readParty(party_id);
+    //party
+    return participant;
 
   }
 
@@ -860,6 +862,7 @@ export class PartyController {
         midPoint: midpoint.name,
         midPointLat: midpoint.lat,
         midPointLng: midpoint.lng,
+        partyType:party.party_type,
         courses: course_list.map((c, idx) => ({
         courseNo: c.course_no,
         courseId: c.course_id,
@@ -871,15 +874,30 @@ export class PartyController {
           lng:c.place_lng??0
         }
       }))},
-      list
+      list:list.map(l => ({
+          placeId: l.id,
+          placeName: l.place_name,
+          placeAddr: l.address_name,
+          lat: l.y,
+          lng: l.x,
+        }))
     }
   }
 
   @Get('course_list/:party_id/:course_id')
   async getCourseList(@Param('party_id') party_id:string,@Param('course_id') course_id:string, @Query('lat') lat: number,@Query('lng') lng: number,){
     const party = await this.partyService.readParty(party_id);
-
-    return await this.kakaoService.findCustomCoursePlaces(party_id,course_id,lat,lng);
+    console.log("코스 수정",party_id,course_id);
+    const list = await this.kakaoService.findCustomCoursePlaces(party_id,course_id,lat,lng);
+    return {
+      list:list.map(l => ({
+          placeId: l.id,
+          placeName: l.place_name,
+          placeAddr: l.address_name,
+          lat: l.y,
+          lng: l.x,
+        }))
+    }
   }
 
   // @Get('test')
