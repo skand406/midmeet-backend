@@ -20,7 +20,7 @@ export class OtpController {
 
   @Get('/kakao')
   async kakaoTest() {
-    return this.kakaoService.kakaoSearch('분위기 좋은',37.41618,126.88447,1000,'FD6','distance');
+    return ""//this.kakaoService.kakaoKeywordSearch('분위기 좋은',37.41618,126.88447,1000,'FD6','distance');
   }
   
   @Get('/route')

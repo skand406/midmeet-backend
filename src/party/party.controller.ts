@@ -843,7 +843,7 @@ export class PartyController {
     const uid = req.user.uid;
     const party = await this.partyService.readParty(party_id);
     const course_list = await this.courseService.readCourseList(party_id);
-    const participant = await this.participantService.findOne(uid,party_id);
+    if(!party||!course_list) throw new NotFoundException('모임이 없습니다.');
     //길찾기 
 
     const midpoint = await this.otpService.getCrossMid(party_id);
@@ -852,7 +852,24 @@ export class PartyController {
     if(party?.party_type==='AI_COURSE')  list = await this.kakaoService.findAICoursePlaces(party_id);
     else list = await this.kakaoService.findCustomCoursePlaces(party_id,course_list[0].course_id,midpoint.lat,midpoint.lng);
     
-    return {party,course_list,list};
+    return {
+      party:{
+        partyName: party.party_name,
+        partyDate: party.date_time,
+        midPoint: midpoint.name,
+        midPointLat: midpoint.lat,
+        midPointLng: midpoint.lng,
+        courses: course_list.map((c, idx) => ({
+        courseNo: c.course_no,
+        places: {
+          placeId: list[idx]?.id ?? 0,
+          placeName: list[idx]?.place_name ?? '미정',
+          placeAddr: list[idx]?.address ?? '미정',
+          lat: Number(list[idx]?.y ?? 0),
+          lng: Number(list[idx]?.x ?? 0),
+        }
+      }))}
+    }
   }
 
   @Get('course_list/:party_id/:course_id')

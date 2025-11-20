@@ -16,8 +16,8 @@ export class KakaoService {
         private courseService:CourseService
     ) {}
 
-async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code:string,sort:string) {
-  const url = `${process.env.KAKAO_URL}`;
+async kakaoKeywordSearch(keyword: string, lat: number, lng: number, radius: number,code:string,sort:string) {
+  const url = `${process.env.KAKAO_URL}/keyword.json`;
 
   const res = await this.httpService.axiosRef.get(url, {
     headers: {
@@ -37,6 +37,25 @@ async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code
   return res.data.documents;
 }
 
+async kakaoCategorySearch(lat: number, lng: number, radius: number,code:string,sort:string) {
+  const url = `${process.env.KAKAO_URL}/category.json`;
+
+  const res = await this.httpService.axiosRef.get(url, {
+    headers: {
+      Authorization: `KakaoAK ${process.env.KAKAO_REST_KEY}`,
+    },
+    params:{
+      category_group_code	:code,
+      x:lng,
+      y:lat,
+      radius:radius,
+      sort:sort
+    }
+
+  });
+  console.log(url);
+  return res.data.documents;
+}
   async findCustomCoursePlaces(party_id:string, course_id:string, place_lat:number, place_lng:number){
     const course = await this.prisma.course.findUnique({ where:{course_id}});
     if(!course) throw new NotFoundException('코스가 존재하지 않습니다.');
@@ -53,7 +72,7 @@ async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code
     const places: any[] =[];
 
     for (const keyword of courseTag.primaryQueries) {
-      const results = await this.kakaoSearch(keyword, targetLat, targetLng, radius, courseTag.category ,'distance');
+      const results = await this.kakaoKeywordSearch(keyword, targetLat, targetLng, radius, courseTag.category ,'distance');
       //console.log(results)
       places.push(...results);        // 🔥 배열 확장
 
@@ -149,8 +168,12 @@ async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code
     const places: any[] = [];
 
     for (const keyword of tag.primaryQueries) {
-      const res = await this.kakaoSearch(keyword, lat, lng, radius, tag.category, sortType);
+      const res = await this.kakaoKeywordSearch(keyword, lat, lng, radius, tag.category, sortType);
       places.push(...res);
+      if (res.length === 0) {
+        const cat = await this.kakaoCategorySearch(lat, lng, radius, tag.category, sortType);
+        places.push(...cat);
+      }
     }
 
     const unique = Array.from(new Map(places.map(p => [p.id, p])).values());
@@ -164,8 +187,13 @@ async kakaoSearch(keyword: string, lat: number, lng: number, radius: number,code
 
     // accuracy 우선 정렬로 가져오되 분산 기준 선택
     for (const keyword of tag.primaryQueries) {
-      const res = await this.kakaoSearch(keyword, lat, lng, radius, tag.category, 'accuracy');
+      const res = await this.kakaoKeywordSearch(keyword, lat, lng, radius, tag.category, 'accuracy');
       places.push(...res);
+      
+      if (res.length === 0) {
+        const cat = await this.kakaoCategorySearch(lat, lng, radius, tag.category, 'accuracy');
+        places.push(...cat);
+      }
     }
 
     const unique = Array.from(new Map(places.map(p => [p.id, p])).values());
