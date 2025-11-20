@@ -839,7 +839,7 @@ export class PartyController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard) 
   @ApiBearerAuth()
-  async findMidPage(@Req() req,@Param('party_id') party_id:string,@Param('course_id') course_id:string, ){
+  async findMidPage(@Req() req,@Param('party_id') party_id:string ){
     const uid = req.user.uid;
     const party = await this.partyService.readParty(party_id);
     const course_list = await this.courseService.readCourseList(party_id);
@@ -847,12 +847,15 @@ export class PartyController {
     //길찾기 
 
     const midpoint = await this.otpService.getCrossMid(party_id);
-    if(party?.party_type==='AI_COURSE') return await this.kakaoService.findAICoursePlaces(party_id);
+    let list: any;
 
-    const list = await this.kakaoService.findCustomCoursePlaces(party_id,course_id,midpoint.lat,midpoint.lng);
+    if(party?.party_type==='AI_COURSE')  list = await this.kakaoService.findAICoursePlaces(party_id);
+    else list = await this.kakaoService.findCustomCoursePlaces(party_id,course_list[0].course_id,midpoint.lat,midpoint.lng);
+    
     return {party,course_list,list};
   }
-  @Get(':party_id/:course_id')
+
+  @Get('course_list/:party_id/:course_id')
   async getCourseList(@Param('party_id') party_id:string,@Param('course_id') course_id:string, @Query('lat') lat: number,@Query('lng') lng: number,){
     const party = await this.partyService.readParty(party_id);
 
