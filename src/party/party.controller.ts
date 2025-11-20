@@ -864,11 +864,11 @@ export class PartyController {
         courseNo: c.course_no,
         courseId: c.course_id,
         places: {
-          placeId: list[idx]?.id ?? 0,
-          placeName: list[idx]?.place_name ?? '미정',
-          placeAddr: list[idx]?.address ?? '미정',
-          lat: Number(list[idx]?.y ?? 0),
-          lng: Number(list[idx]?.x ?? 0),
+          placeId: list[idx]?.id,
+          placeName: list[idx]?.place_name,
+          placeAddr: list[idx]?.address,
+          lat: Number(list[idx].y),
+          lng: Number(list[idx].x),
         }
       }))}
     }
