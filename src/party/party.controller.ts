@@ -7,15 +7,17 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserService } from 'src/user/user.service';
-import { CreateCourseArrayDto } from './dto/create-course.dto';
-import { CourseService } from './services/course.service';
 import { get, STATUS_CODES } from 'http';
 import { createParticipantDto } from './dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { error } from 'console';
 import { UpdateParticipantDto } from './dto/update-participant.dto';
-import { UpdateCourseArrayDto, UpdateCourseDto } from './dto/update-course.dto';
 import { PARAMTYPES_METADATA } from '@nestjs/common/constants';
+import { CourseService } from './services/course.service';
+import { CreateCourseArrayDto } from './dto/create-course.dto';
+import { UpdateCourseArrayDto, UpdateCourseDto } from './dto/update-course.dto';
+import { OtpService } from './services/otp.service';
+import { KakaoService } from './services/kakao.service';
 
 @ApiTags('party')
 @Controller('party')
@@ -25,7 +27,9 @@ export class PartyController {
     private participantService: ParticipantService,
     private userService: UserService,
     private courseService: CourseService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private otpService:OtpService,
+    private kakaoService:KakaoService
   ) {}
 
 
@@ -722,7 +726,7 @@ export class PartyController {
     }
   })
   async getParticipantcount(@Param('party_id') party_id:string){
-    return this.partyService.getParticipantcount(party_id);
+    return this.partyService.readParticipantcount(party_id);
   }
 
 
@@ -812,16 +816,37 @@ export class PartyController {
 
   // }
 
-  @Get('/:party_id')
+  @Get(':party_id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard) 
   @ApiBearerAuth()
-  async findParty(@Param('party_id') party_id:string ){
-    //const uid = req.user.uid;
-    const party = await this.partyService.getParty(party_id);
-    const course_list = await this.courseService.getCourseList(party_id);
-    
+  async findParty(@Req() req,@Param('party_id') party_id:string ){
+    const uid = req.user.uid;
+    const party = await this.partyService.readParty(party_id);
+    const course_list = await this.courseService.readCourseList(party_id);
+    const participant = await this.participantService.findOne(uid,party_id);
     //길찾기 
-    return {party,course_list};
+
+    const from = `${participant?.start_lat},${participant?.start_lng}`;
+    const to = `${course_list[0]?.place_lat},${course_list[0]?.place_lng}`
+    const date_time=`${party?.date_time}`;
+    const mode = participant?.transport_mode || 'PUBLIC';
+    const route = await this.otpService.getRoute(from,to,mode,date_time);
+    return {party,courses:course_list,route};
   }
+
+  @Get(':party_id/:course_id')
+  async getCourseList(@Param('party_id') party_id:string,@Param('course_id') course_id:string,  @Query('lat') lat?: number,@Query('lng') lng?: number,){
+    const party = await this.partyService.readParty(party_id);
+    //if(party?.party_type==='AI_COURSE') return await this.kakaoService.findAICoursePlaces(party_id);
+
+    return await this.kakaoService.findCustomCoursePlaces(party_id,course_id,lat,lng);
+  }
+
+  // @Get('test')
+  // async test(){
+  //   //return await this.kakaoService.findAICoursePlaces('cmgtao6uo0004vp3kd1s7b3x7');
+
+  //   return await this.kakaoService.findCustomCoursePlaces('cmgtao6uo0004vp3kd1s7b3x7',course_id,lat,lng);
+  // }
 }

@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpServer, Injectable, NotFoundException } from '@nestjs/common';
 import * as turf from '@turf/turf';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ParticipantService } from '../../party/services/participant.service';
+import { ParticipantService } from './participant.service';
 import { Party, TransportMode } from '@prisma/client';
 import { Feature, Polygon, MultiPolygon, FeatureCollection, GeoJsonProperties } from 'geojson'; // ✅ 타입 전용
 import * as fs from 'fs';
@@ -62,7 +62,7 @@ export class OtpService {
       throw error;
       }
   }
-  async test(lat:number, lon:number, cutoff:string) {
+  async test(lat:number,lng:number, cutoff:string) {
     const now = new Date();
     now.setHours(8, 0, 0, 0); // 오후 12시로 고정
     const isoTime = now.toISOString().replace('Z', '+09:00');
@@ -75,7 +75,7 @@ export class OtpService {
         {
           params: {
             batch: true,
-            location: `${lat},${lon}`,
+            location: `${lat},${lng}`,
             time: isoTime, // 현재 시간 기준
             modes: 'WALK, TRANSIT',
             arriveBy: false,
@@ -129,7 +129,7 @@ export class OtpService {
   private async getMaxDurationTime(participants,center_lat:number, center_lng:number,date_time:string) {
     const times = await Promise.all(
       participants.map(async (p) => {
-        const mode = this.getMode(p.transport_mode||"PUBLIC");
+        const mode = p.transport_mode||"PUBLIC";
         const result = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${center_lat},${center_lng}`,mode,date_time);
         return result.plan.itineraries[0].duration;
       }));
@@ -137,9 +137,11 @@ export class OtpService {
   }
 
   /*OTP 경로 조회*/
-  async getRoute(from: string, to: string, mode:string, date_time:string) {
+  async getRoute(from: string, to: string, transport_mode:TransportMode, date_time:string) {
     const [date,time] = date_time.split('T');
-     
+
+    const mode = this.getMode(transport_mode||"PUBLIC");
+
     const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
     const res = await this.httpService.axiosRef.get(
@@ -226,31 +228,29 @@ export class OtpService {
   /*중심점으로부터 제일 가까운 장소 */
   private getNearPoint(stops:any[],center_lat:number,center_lng:number){
     const fc = turf.featureCollection(
-        stops.map(p =>
-          turf.point([p.lon, p.lat], p) // properties에 p 전체를 넣음
-        )
-      );
+        stops.map(p =>turf.point([Number(p.lng), Number(p.lat)], p))
+    );
       return turf.nearestPoint([center_lng, center_lat], fc).properties;
   }
 
   /* 교차영역 내 지하철 후보 */
   async getSubwayList(intersection: Feature<Polygon | MultiPolygon, GeoJsonProperties>) {
     const stops = await this.loadSubwayStops();
-    const result = stops.filter(s => turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), intersection));
+    const result = stops.filter(s => turf.booleanPointInPolygon(turf.point([s.lng, s.lat]), intersection));
     return result;
   }
   /* 지하철역 로딩 */
-  private async loadSubwayStops():Promise<{ id: string; name: string; lat: number; lon: number }[]> {
+  private async loadSubwayStops():Promise<{ id: string; name: string; lat: number;lng: number }[]> {
     return new Promise(resolve => {
       const stops: any[] = [];
-      fs.createReadStream(path.resolve(process.cwd(), 'src/otp/stops.txt'))
+      fs.createReadStream(path.resolve(process.cwd(), 'src/data/stops.txt'))
         .pipe(csv())
         .on('data', r =>
           stops.push({ 
             id: r.stop_id, 
             name: r.stop_name, 
             lat: parseFloat(r.stop_lat), 
-            lon: parseFloat(r.stop_lon) 
+            lng: parseFloat(r.stop_lng) 
           }))
         .on('end', () => resolve(stops));
     }); 
@@ -262,8 +262,8 @@ export class OtpService {
       stops.map(async (stop) => {
         const times = await Promise.all(
           participants.map(async (p) =>{
-            const mode = this.getMode(p.transport_mode||"PUBLIC");
-            const time = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${stop.lat},${stop.lon}`,mode,date_time);            
+            const mode = p.transport_mode || 'PUBLIC';
+            const time = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${stop.lat},${stop.lng}`,mode,date_time);            
             if (!time.plan || !time.plan.itineraries?.length) return Infinity;
 
             return time.plan.itineraries[0].duration;

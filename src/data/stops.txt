@@ -1,4 +1,4 @@
-﻿stop_id,stop_name,stop_lat,stop_lon
+﻿stop_id,stop_name,stop_lat,stop_lng
 RS_ACC1_S-1-0150,서울역,37.555870000,126.972100000
 RS_ACC1_S-1-0151,시청,37.565710000,126.977120000
 RS_ACC1_S-1-0152,종각,37.570160000,126.982920000

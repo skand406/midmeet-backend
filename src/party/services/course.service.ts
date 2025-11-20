@@ -74,7 +74,9 @@ export class CourseService {
     })
   }
 
-  async getCourseList(party_id){
+  async readCourseList(party_id){
     return await this.prisma.course.findMany({where:{party_id}});
   }
+
+   
 }

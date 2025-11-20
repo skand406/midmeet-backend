@@ -60,7 +60,7 @@ export class PartyService {
     return this.userService.getUserVisits(uid);
   }
 
-  async getParticipantcount(party_id:string){
+  async readParticipantcount(party_id:string){
     const party = await this.prisma.party.findUnique({where : {party_id}})
     const current_participant_count = await this.prisma.participant.count({where: {party_id}})
 
@@ -74,7 +74,7 @@ export class PartyService {
     }
   }
 
-  async getParty(party_id:string){
+  async readParty(party_id:string){
     return await this.prisma.party.findUnique({where : {party_id}})
 
   }
