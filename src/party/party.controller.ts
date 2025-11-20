@@ -18,6 +18,7 @@ import { CreateCourseArrayDto } from './dto/create-course.dto';
 import { UpdateCourseArrayDto, UpdateCourseDto } from './dto/update-course.dto';
 import { OtpService } from './services/otp.service';
 import { KakaoService } from './services/kakao.service';
+import { MidPartyDto } from './dto/mid-data.dto';
 
 @ApiTags('party')
 @Controller('party')
@@ -861,6 +862,7 @@ export class PartyController {
         midPointLng: midpoint.lng,
         courses: course_list.map((c, idx) => ({
         courseNo: c.course_no,
+        courseId: c.course_id,
         places: {
           placeId: list[idx]?.id ?? 0,
           placeName: list[idx]?.place_name ?? '미정',

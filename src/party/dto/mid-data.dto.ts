@@ -21,6 +21,9 @@ export class MidCourseDto {
   @ApiProperty({ example: 1 })
   courseNo: number;
 
+  @ApiProperty({ example: 'cmglvehl30007vpigz62q4lyi' })
+  courseId: string;
+
   @ApiProperty({ type: MidCoursePlaceDto })
   places: MidCoursePlaceDto;
 }
