@@ -23,7 +23,7 @@ export class MapService {
 
     try{
       const response = await firstValueFrom(this.httpService.get(this.apiUrl,{params}));
-      
+
       return response.data;
     } catch (err){
       throw err;

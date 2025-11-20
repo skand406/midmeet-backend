@@ -43,6 +43,7 @@ import { UpdateCourseArrayDto, UpdateCourseDto } from './dto/update-course.dto';
 import { OtpService } from './services/otp.service';
 import { KakaoService } from './services/kakao.service';
 import { MailService } from 'src/auth/mail.service';
+import { MidPartyDto } from './dto/mid-data.dto';
 
 @ApiTags('party')
 @Controller('party')
@@ -938,17 +939,26 @@ export class PartyController {
         midPoint: midpoint.name,
         midPointLat: midpoint.lat,
         midPointLng: midpoint.lng,
+        partyType: party.party_type,
         courses: course_list.map((c, idx) => ({
           courseNo: c.course_no,
+          courseId: c.course_id,
           places: {
-            placeId: list[idx]?.id ?? 0,
-            placeName: list[idx]?.place_name ?? '미정',
-            placeAddr: list[idx]?.address ?? '미정',
-            lat: Number(list[idx]?.y ?? 0),
-            lng: Number(list[idx]?.x ?? 0),
+            placeId: '',
+            placeName: c.place_name ?? '',
+            placeAddr: c.place_address ?? '',
+            lat: c.place_lat ?? 0,
+            lng: c.place_lng ?? 0,
           },
         })),
       },
+      list: list.map((l) => ({
+        placeId: l.id,
+        placeName: l.place_name,
+        placeAddr: l.address_name,
+        lat: l.y,
+        lng: l.x,
+      })),
     };
   }
 
@@ -960,13 +970,22 @@ export class PartyController {
     @Query('lng') lng: number,
   ) {
     const party = await this.partyService.readParty(party_id);
-
-    return await this.kakaoService.findCustomCoursePlaces(
+    console.log('코스 수정', party_id, course_id);
+    const list = await this.kakaoService.findCustomCoursePlaces(
       party_id,
       course_id,
       lat,
       lng,
     );
+    return {
+      list: list.map((l) => ({
+        placeId: l.id,
+        placeName: l.place_name,
+        placeAddr: l.address_name,
+        lat: l.y,
+        lng: l.x,
+      })),
+    };
   }
 
   // @Get('test')

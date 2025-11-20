@@ -83,7 +83,9 @@ async kakaoCategorySearch(lat: number, lng: number, radius: number,code:string,s
     for (const p of places) uniqueMap.set(p.id, p);
     let r = Array.from(uniqueMap.values());
       
-    
+    if(r.length === 0){
+      r = await this. kakaoCategorySearch(targetLat,targetLng,radius,courseTag.category,'distance');
+    }
     //const filtered = r.filter(p => tag.secondaryFilters.includes(p.category_name));
 
     return r;
