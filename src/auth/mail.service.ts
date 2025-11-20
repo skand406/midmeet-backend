@@ -1,11 +1,17 @@
-import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { randomBytes,createHash } from 'crypto';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  GoneException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { randomBytes, createHash } from 'crypto';
 import * as nodemailer from 'nodemailer';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class MailService {
-
   private transporter;
 
   constructor(private prisma: PrismaService) {
@@ -41,7 +47,7 @@ export class MailService {
   async sendPasswordResetMail(to: string, uid: string) {
     const { raw, hash } = this.generateToken();
     await this.saveToken(uid, 'RESET', hash, 1000 * 60 * 10); // 10분
-    
+
     const link = `${process.env.FRONT_URL}/Reset-passwd?token=${raw}`;
 
     await this.transporter.sendMail({
@@ -56,13 +62,13 @@ export class MailService {
     });
   }
 
-  //토큰 생성 
-  generateToken(){
+  //토큰 생성
+  generateToken() {
     const raw = randomBytes(32).toString('hex');
     const hash = createHash('sha256').update(raw).digest('hex');
     return { raw, hash };
   }
-   // ✅ 토큰 저장
+  // ✅ 토큰 저장
   async saveToken(userUid: string, type: string, hash: string, ttl: number) {
     return this.prisma.verificationToken.create({
       data: {
@@ -77,11 +83,14 @@ export class MailService {
   // ✅ 토큰 검증
   async verifyToken(raw: string, type: string) {
     const hash = createHash('sha256').update(raw).digest('hex');
-    const record = await this.prisma.verificationToken.findUnique({ where: { token: hash } });
+    const record = await this.prisma.verificationToken.findUnique({
+      where: { token: hash },
+    });
 
     if (!record) throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     if (record.type !== type) throw new BadRequestException('토큰 타입 불일치');
-    if (record.expiresAt < new Date()) throw new ConflictException('토큰 만료됨');
+    if (record.expiresAt < new Date())
+      throw new ConflictException('토큰 만료됨');
     if (record.usedAt) throw new GoneException('이미 사용된 토큰');
 
     return record;
@@ -95,4 +104,18 @@ export class MailService {
     });
   }
 
+  async sendMail(to: string, party_id: string) {
+    const link = `${process.env.FRONT_URL}/midpoint/${party_id}`;
+
+    await this.transporter.sendMail({
+      from: `"MidMeet" <${process.env.MAIL_USER}>`,
+      to,
+      subject: '모임이 입력을 완성해세요!',
+      html: `
+        <h2>모임 입력 완료!</h2>
+        <p>모든 참여자가 출발지를 완성했습니다. 링크를 클릭해 모임을 완성해보세요!</p>
+        <a href="${link}">${link}</a>
+      `,
+    });
+  }
 }
