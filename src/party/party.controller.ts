@@ -58,7 +58,7 @@ export class PartyController {
     private otpService: OtpService,
     private kakaoService: KakaoService,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get(':party_id/invite')
@@ -921,22 +921,26 @@ export class PartyController {
     //길찾기
     console.log('ai 코스 여부', party.party_type);
     const midpoint = await this.otpService.getCrossMid(party_id);
-    let arr:any={};
+    let arr: any = {};
     let data: any = {};
-    let list:any={};
-    if (party?.party_type === 'AI_COURSE'){
+    let list: any = {};
+    if (party?.party_type === 'AI_COURSE') {
       console.log('AI 코스 장소 불러오기');
-      arr = await this.kakaoService.findAICoursePlaces(party_id,midpoint.lat,midpoint.lng);
+      arr = await this.kakaoService.findAICoursePlaces(
+        party_id,
+        midpoint.lat,
+        midpoint.lng,
+      );
 
       const convertName = [
         '거리우선 추천코스',
         '인기우선 추천코스',
         'AI추천 코스',
       ];
-      list=[
+      list = [
         arr.distance.map((l) => ({
-          courseId: course_list[0].course_id,
-          courseNo: course_list[0].course_no,
+          courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+          courseNo: '1',
           courseName: convertName[0],
           places: {
             placeId: l.id,
@@ -944,42 +948,73 @@ export class PartyController {
             placeAddr: l.address_name,
             lat: Number(l.y),
             lng: Number(l.x),
-          }
+          },
         })),
         arr.accuracy.map((l) => ({
-          courseId: course_list[0].course_id,
-          courseNo: course_list[0].course_no,
-          courseName: convertName[0],
+          courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+          courseNo: '2',
+          courseName: convertName[1],
           places: {
             placeId: l.id,
             placeName: l.place_name,
             placeAddr: l.address_name,
             lat: Number(l.y),
             lng: Number(l.x),
-          }
+          },
         })),
         arr.diversity.map((l) => ({
-          courseId: course_list[0].course_id,
-          courseNo: course_list[0].course_no,
-          courseName: convertName[0],
+          courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+          courseNo: '3',
+          courseName: convertName[2],
           places: {
             placeId: l.id,
             placeName: l.place_name,
             placeAddr: l.address_name,
             lat: Number(l.y),
             lng: Number(l.x),
-          }
+          },
         })),
       ];
-      data={
+      data = {
         party: {
+          partyName: party.party_name,
+          partyDate: party.date_time,
+          midPoint: midpoint.name,
+          midPointLat: midpoint.lat,
+          midPointLng: midpoint.lng,
+          partyType: party.party_type,
+          courses: course_list.map((c) => ({
+            courseNo: c.course_no,
+            courseId: c.course_id,
+            places: {
+              placeId: '',
+              placeName: c.place_name ?? '',
+              placeAddr: c.place_address ?? '',
+              lat: c.place_lat ?? 0,
+              lng: c.place_lng ?? 0,
+            },
+          })),
+        },
+        list: list.flat(),
+      };
+
+      return data;
+    }
+    arr = await this.kakaoService.findCustomCoursePlaces(
+      party_id,
+      course_list[0].course_id,
+      midpoint.lat,
+      midpoint.lng,
+    );
+    data = {
+      party: {
         partyName: party.party_name,
         partyDate: party.date_time,
         midPoint: midpoint.name,
         midPointLat: midpoint.lat,
         midPointLng: midpoint.lng,
         partyType: party.party_type,
-        courses: course_list.map((c) => ({
+        courses: course_list.map((c, idx) => ({
           courseNo: c.course_no,
           courseId: c.course_id,
           places: {
@@ -988,39 +1023,8 @@ export class PartyController {
             placeAddr: c.place_address ?? '',
             lat: c.place_lat ?? 0,
             lng: c.place_lng ?? 0,
-          },})),
-        },
-        list: list.flat(),
-    };
-
-
-      return data;  
-    }
-    arr = await this.kakaoService.findCustomCoursePlaces(
-        party_id,
-        course_list[0].course_id,
-        midpoint.lat,
-        midpoint.lng,
-      );
-    data={
-      party: {
-      partyName: party.party_name,
-      partyDate: party.date_time,
-      midPoint: midpoint.name,
-      midPointLat: midpoint.lat,
-      midPointLng: midpoint.lng,
-      partyType: party.party_type,
-      courses: course_list.map((c, idx) => ({
-        courseNo: c.course_no,
-        courseId: c.course_id,
-        places: {
-          placeId: '',
-          placeName: c.place_name ?? '',
-          placeAddr: c.place_address ?? '',
-          lat: c.place_lat ?? 0,
-          lng: c.place_lng ?? 0,
-        },
-      })),
+          },
+        })),
       },
       list: arr.map((l) => ({
         placeId: l.id,
@@ -1029,10 +1033,9 @@ export class PartyController {
         lat: l.y,
         lng: l.x,
       })),
-    }
-  
+    };
+
     return data;
-      
   }
 
   @Get('course_list/:party_id/:course_id')
