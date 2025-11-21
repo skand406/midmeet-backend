@@ -15,7 +15,7 @@ export class OtpController {
   async otpTest() {
     //return this.mapService.getCoordinates('인천 미추홀구 경원대로 715');
     return this.kakaoService.findAICoursePlaces(
-      'cmgtgcvde0000vprgzmvixr3m',
+      'cmi88yayx0000vpds6rymj6x4',
       37.45687,
       126.70575,
     );

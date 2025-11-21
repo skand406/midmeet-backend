@@ -154,7 +154,10 @@ export class KakaoService {
         radius,
         'distance',
       );
-      resultDistance.push(pickDist);
+      resultDistance.push({
+        course_id: course.course_id,
+        place: pickDist,
+      });
       seedDistance = [{ lat: Number(pickDist.y), lng: Number(pickDist.x) }];
 
       /** -------------------------
@@ -166,7 +169,10 @@ export class KakaoService {
         radius,
         'accuracy',
       );
-      resultAccuracy.push(pickAcc);
+      resultAccuracy.push({
+        course_id: course.course_id,
+        place: pickAcc,
+      });
       seedAccuracy = [{ lat: Number(pickAcc.y), lng: Number(pickAcc.x) }];
 
       /** -------------------------
@@ -177,7 +183,10 @@ export class KakaoService {
         seedDiversity[0],
         radius,
       );
-      resultDiversity.push(pickDiv);
+      resultDiversity.push({
+        course_id: course.course_id,
+        place: pickDiv,
+      });
       seedDiversity = [{ lat: Number(pickDiv.y), lng: Number(pickDiv.x) }];
 
       radius = 500; // 이후 탐색 radius 감소

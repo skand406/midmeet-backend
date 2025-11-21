@@ -45,6 +45,8 @@ import { KakaoService } from './services/kakao.service';
 import { MailService } from 'src/auth/mail.service';
 import { MidPartyDto } from './dto/mid-data.dto';
 import { map } from 'rxjs';
+import { plainToClass } from 'class-transformer';
+import { start } from 'repl';
 
 @ApiTags('party')
 @Controller('party')
@@ -58,7 +60,7 @@ export class PartyController {
     private otpService: OtpService,
     private kakaoService: KakaoService,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @Get(':party_id/invite')
@@ -896,18 +898,120 @@ export class PartyController {
   @ApiBearerAuth()
   async findResultPage(@Req() req, @Param('party_id') party_id: string) {
     const uid = req.user.uid;
+
     const party = await this.partyService.readParty(party_id);
     const course_list = await this.courseService.readCourseList(party_id);
     const participant = await this.participantService.findOne(uid, party_id);
-    //길찾기
 
-    const from = `${participant?.start_lat},${participant?.start_lng}`;
-    const to = `${course_list[0]?.place_lat},${course_list[0]?.place_lng}`;
-    const date_time = `${party?.date_time}`;
-    const mode = participant?.transport_mode || 'PUBLIC';
+    if (!party || !course_list || !participant) {
+      throw new NotFoundException('모임이 없습니다.');
+    }
+
+    /* ---------------------------------------------------
+        1) LEADER : 모든 참여자 경로 반환
+    --------------------------------------------------- */
+    if (participant.role === 'LEADER') {
+      const participant_list = await this.participantService.findMany(party_id);
+
+      // 1-1) 모든 참여자 경로 계산
+      const members = await Promise.all(
+        participant_list.map(async (p) => {
+          if (!p.user_uid) throw new NotFoundException('참여자 정보가 없습니다.');
+          const from = `${p.start_lat},${p.start_lng}`;
+          const to = `${course_list[0].place_lat},${course_list[0].place_lng}`;
+          const mode = p.transport_mode || 'PUBLIC';
+          const date_time = `${party.date_time}`;
+
+          const route = await this.otpService.getRoute(from, to, mode, date_time);
+          const user = await this.userService.findById(p.user_uid);
+
+          return {
+            name: user?.name ?? '알 수 없음',
+            startAddr: p.start_address,
+            transportMode: p.transport_mode,
+            routeDetail: {
+              totalTime: '',
+              routeSteps: [],
+              startLat: '',
+              startLng: '',
+            },
+          };
+        }),
+      );
+      const from = `${participant.start_lat},${participant.start_lng}`;
+      const to = `${course_list[0].place_lat},${course_list[0].place_lng}`;
+      const mode = participant.transport_mode || 'PUBLIC';
+      const date_time = `${party.date_time}`;
+      const route = await this.otpService.getRoute(from, to, mode, date_time);
+
+      // 1-2) 반환
+      return {
+        role: participant.role,
+        party: {
+          partyName: party.party_name,
+          partyDate: party.date_time,
+          midPoint: party.mid_place,
+          midPointLat: party.mid_lat,
+          midPointLng: party.mid_lng,
+          courses: course_list.map((c) => ({
+            courseId: c.course_id,
+            courseNo: c.course_no,
+            places: {
+              placeId: '',
+              placeName: c.place_name,
+              placeAddr: c.place_address,
+              lat: c.place_lat,
+              lng: c.place_lng,
+            },
+          })),
+        },
+        member: members,
+      }
+    }
+
+    /* ---------------------------------------------------
+        2) MEMBER : 본인 경로만 반환
+    --------------------------------------------------- */
+    const from = `${participant.start_lat},${participant.start_lng}`;
+    const to = `${course_list[0].place_lat},${course_list[0].place_lng}`;
+    const date_time = `${party.date_time}`;
+    const mode = participant.transport_mode || 'PUBLIC';
     const route = await this.otpService.getRoute(from, to, mode, date_time);
-    return { party, course_list, route };
+    const member = {
+      name: (await this.userService.findById(uid))?.name ?? '알 수 없음',
+      startAddr: participant.start_address,
+      transportMode: participant.transport_mode,
+      routeDetail: {
+        totalTime: '',
+        routeSteps: [],
+        startLat: '',
+        startLng: '',
+      },
+    };
+    return {
+      role: participant.role,
+      party: {
+        partyName: party.party_name,
+        partyDate: party.date_time,
+        midPoint: party.mid_place,
+        midPointLat: party.mid_lat,
+        midPointLng: party.mid_lng,
+        courses: course_list.map((c) => ({
+          courseId: c.course_id,
+          courseNo: c.course_no,
+          places: {
+            placeId: '',
+            placeName: c.place_name,
+            placeAddr: c.place_address,
+            lat: c.place_lat,
+            lng: c.place_lng,
+          },
+        })),
+      },
+      member:[member],
+    };
   }
+
 
   @Get(':party_id/mid')
   @HttpCode(HttpStatus.OK)
@@ -918,14 +1022,21 @@ export class PartyController {
     const party = await this.partyService.readParty(party_id);
     const course_list = await this.courseService.readCourseList(party_id);
     if (!party || !course_list) throw new NotFoundException('모임이 없습니다.');
-    //길찾기
-    console.log('ai 코스 여부', party.party_type);
+
     const midpoint = await this.otpService.getCrossMid(party_id);
-    let arr: any = {};
+    await this.partyService.updatePartyType({
+      mid_place: midpoint.name,
+      mid_lat: midpoint.lat,
+      mid_lng: midpoint.lng,
+    }, party_id);
+
     let data: any = {};
-    let list: any = {};
-    if (party?.party_type === 'AI_COURSE') {
-      console.log('AI 코스 장소 불러오기');
+    let arr: any;
+
+    /* ---------------------------------------------------
+        AI_COURSE
+    --------------------------------------------------- */
+    if (party.party_type === 'AI_COURSE') {
       arr = await this.kakaoService.findAICoursePlaces(
         party_id,
         midpoint.lat,
@@ -937,44 +1048,48 @@ export class PartyController {
         '인기우선 추천코스',
         'AI추천 코스',
       ];
-      list = [
-        arr.distance.map((l) => ({
+
+      // 각 추천 유형을 course 단위로 묶기
+      const list = [
+        {
           courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-          courseNo: '1',
+          courseNo: 1,
           courseName: convertName[0],
-          places: {
-            placeId: l.id,
-            placeName: l.place_name,
-            placeAddr: l.address_name,
-            lat: Number(l.y),
-            lng: Number(l.x),
-          },
-        })),
-        arr.accuracy.map((l) => ({
+          places: arr.distance.map((l) => ({
+            placeId: l.course_id,
+            placeName: l.place.place_name,
+            placeAddr: l.place.address_name,
+            lat: Number(l.place.y),
+            lng: Number(l.place.x),
+          })),
+        },
+        {
           courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-          courseNo: '2',
+          courseNo: 2,
           courseName: convertName[1],
-          places: {
-            placeId: l.id,
-            placeName: l.place_name,
-            placeAddr: l.address_name,
-            lat: Number(l.y),
-            lng: Number(l.x),
-          },
-        })),
-        arr.diversity.map((l) => ({
+          places: arr.accuracy.map((l) => ({
+            placeId: l.course_id,
+            placeName: l.place.place_name,
+            placeAddr: l.place.address_name,
+            lat: Number(l.place.y),
+            lng: Number(l.place.x),
+          })),
+        },
+        {
           courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-          courseNo: '3',
+          courseNo: 3,
           courseName: convertName[2],
-          places: {
-            placeId: l.id,
-            placeName: l.place_name,
-            placeAddr: l.address_name,
-            lat: Number(l.y),
-            lng: Number(l.x),
-          },
-        })),
+          places: arr.diversity.map((l) => ({
+            placeId: l.course_id,
+            placeName: l.place.place_name,
+            placeAddr: l.place.address_name,
+            lat: Number(l.place.y),
+            lng: Number(l.place.x),
+          })),
+        },
       ];
+
+      // 최종 반환 데이터
       data = {
         party: {
           partyName: party.party_name,
@@ -995,17 +1110,22 @@ export class PartyController {
             },
           })),
         },
-        list: list.flat(),
+        list,  // ⬅ 배열 형태로 반환됨
       };
 
       return data;
     }
+
+    /* ---------------------------------------------------
+        CUSTOM_COURSE
+    --------------------------------------------------- */
     arr = await this.kakaoService.findCustomCoursePlaces(
       party_id,
       course_list[0].course_id,
       midpoint.lat,
       midpoint.lng,
     );
+
     data = {
       party: {
         partyName: party.party_name,
@@ -1014,7 +1134,7 @@ export class PartyController {
         midPointLat: midpoint.lat,
         midPointLng: midpoint.lng,
         partyType: party.party_type,
-        courses: course_list.map((c, idx) => ({
+        courses: course_list.map((c) => ({
           courseNo: c.course_no,
           courseId: c.course_id,
           places: {
@@ -1037,6 +1157,7 @@ export class PartyController {
 
     return data;
   }
+
 
   @Get('course_list/:party_id/:course_id')
   async getCourseList(
@@ -1070,4 +1191,37 @@ export class PartyController {
 
   //   return await this.kakaoService.findCustomCoursePlaces('cmgtao6uo0004vp3kd1s7b3x7',course_id,lat,lng);
   // }
+
+  @Get(':party_id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '모임 정보 조회' })
+  @ApiResponse({
+    status: 200, 
+    description: '모임 정보 조회 성공',
+    schema: {
+      example: { 
+        party_id: 'cmgtao6uo0004vp3kd1s7b3x7',
+        party_name: '주말 회식 모임',
+        party_type: 'AI_COURSE',  
+        date_time: '2024-08-15T18:30:00.000Z',
+        participant_count: 5,
+        mid_place: '중앙공원',
+        mid_lat: 37.123456,
+        mid_lng: 127.123456
+      },  
+    },
+  })
+  @ApiResponse({    
+    status: 500,  
+    description: '서버 내부 오류 (DB 문제 등)',    
+    schema: {      
+      example: {        
+        statusCode: 500,        
+        error: 'Internal Server Error',      
+      },    
+    },  
+  })  
+  async getPartyInfo(@Param('party_id') party_id: string) {    
+    return await this.partyService.readParty(party_id); 
+  }
 }

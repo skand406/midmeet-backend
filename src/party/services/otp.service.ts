@@ -131,7 +131,9 @@ export class OtpService {
       participants.map(async (p) => {
         const mode = p.transport_mode||"PUBLIC";
         const result = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${center_lat},${center_lng}`,mode,date_time);
-        return result.plan.itineraries[0].duration || Infinity;
+        const duration = result?.plan?.itineraries?.[0]?.duration ?? null;
+
+        return duration;
       }));
     return Math.max(...times);
   }
@@ -154,7 +156,7 @@ export class OtpService {
           date: date,
           time: time,
           arriveBy: false,
-          numItineraries: 1,
+          numItineraries: 5,
         },
         headers: {
           Accept: 'application/json',  // ✅ HTML 말고 JSON만 받기

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { PartyType } from '@prisma/client'; // Prisma enum import
-import { IsBoolean, IsDateString, IsNotEmpty, isNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, isNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdatePartyDto {
 
@@ -35,4 +35,28 @@ export class UpdatePartyDto {
         example: '친구들 점심 모임',
     })
     party_name?: string;
+
+    @IsOptional()
+    @IsString()
+    @ApiPropertyOptional({
+        description: '중간장소 이름',
+        example: '서울역',
+    })
+    mid_place?: string;
+    
+    @IsOptional()
+    @IsNumber()
+    @ApiPropertyOptional({
+        description: '중간장소 경도',
+        example: '126.9780',
+    })
+    mid_lng?: number;
+    
+    @IsOptional()
+    @IsNumber()
+    @ApiPropertyOptional({
+        description: '중간장소 위도',
+        example: '37.5665',
+    })
+    mid_lat?: number;
 }

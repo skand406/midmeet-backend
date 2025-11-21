@@ -69,6 +69,8 @@ export class UpdateCourseArrayDto {
       place_name: any;
       place_address: any;
       course_view: any;
+      place_lat: number;
+      place_lng: number;
     },
   ): any {
     throw new Error('Method not implemented.');
