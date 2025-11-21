@@ -63,6 +63,9 @@ model Party {
   party_type PartyType? // DBML에 [not null] 명시가 없어서 optional로 매핑
   party_state Boolean    @default(false)
   participant_count Int?
+  mid_lat     Decimal?      @db.Decimal(9, 6)
+  mid_lng     Decimal?      @db.Decimal(9, 6)
+  mid_place   String?
 
   participants Participant[]
   courses      Course[]
