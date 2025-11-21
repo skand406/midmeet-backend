@@ -110,10 +110,25 @@ export class MailService {
     await this.transporter.sendMail({
       from: `"MidMeet" <${process.env.MAIL_USER}>`,
       to,
-      subject: '모임이 입력을 완성해세요!',
+      subject: '모임이 입력을 완성하세요!',
       html: `
         <h2>모임 입력 완료!</h2>
         <p>모든 참여자가 출발지를 완성했습니다. 링크를 클릭해 모임을 완성해보세요!</p>
+        <a href="${link}">${link}</a>
+      `,
+    });
+  }
+
+  async sendCompliteMail(to: string, party_id: string) {
+    const link = `${process.env.FRONT_URL}/midpoint/result/${party_id}`;
+
+    await this.transporter.sendMail({
+      from: `"MidMeet" <${process.env.MAIL_USER}>`,
+      to,
+      subject: '모임이 완성되었습니다.',
+      html: `
+        <h2>모임 생성 완료</h2>
+        <p>여러분을 위한 모임이 생성되었습니다. 지금 바로 확인해보세요!!</p>
         <a href="${link}">${link}</a>
       `,
     });
