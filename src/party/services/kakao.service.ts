@@ -91,7 +91,7 @@ async kakaoCategorySearch(lat: number, lng: number, radius: number,code:string,s
     return r;
   }
 
-  async findAICoursePlaces(party_id: string) {
+  async findAICoursePlaces(party_id: string,lat:number,lng:number) {
     const course_list = await this.prisma.course.findMany({
       where: { party_id },
       orderBy: { course_no: 'asc' },
@@ -107,11 +107,10 @@ async kakaoCategorySearch(lat: number, lng: number, radius: number,code:string,s
     const resultDiversity :any[]= [];
 
     // 최초 seed 좌표 = mid point
-    const { lat: midLat, lng: midLng } = await this.otpService.getCrossMid('cmgtgcvde0000vprgzmvixr3m');
     //37.41618,126.88447,1000
-    seedDistance = [{ lat: midLat, lng: midLng }];
-    seedAccuracy = [{ lat: midLat, lng: midLng }];
-    seedDiversity = [{ lat: midLat, lng: midLng }];
+    seedDistance = [{ lat, lng }];
+    seedAccuracy = [{ lat, lng }];
+    seedDiversity = [{ lat, lng }];
 
     let radius = 1000;
 

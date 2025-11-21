@@ -919,20 +919,58 @@ export class PartyController {
     const course_list = await this.courseService.readCourseList(party_id);
     if (!party || !course_list) throw new NotFoundException('모임이 없습니다.');
     //길찾기
-
+    console.log('ai 코스 여부', party.party_type);
     const midpoint = await this.otpService.getCrossMid(party_id);
-    let list:any;
+    let arr:any={};
     let data: any = {};
-
+    let list:any={};
     if (party?.party_type === 'AI_COURSE'){
-      list = await this.kakaoService.findAICoursePlaces(party_id);
-      
+      console.log('AI 코스 장소 불러오기');
+      arr = await this.kakaoService.findAICoursePlaces(party_id,midpoint.lat,midpoint.lng);
+
       const convertName = [
         '거리우선 추천코스',
         '인기우선 추천코스',
         'AI추천 코스',
       ];
-     
+      list=[
+        arr.distance.map((l) => ({
+          courseId: course_list[0].course_id,
+          courseNo: course_list[0].course_no,
+          courseName: convertName[0],
+          places: {
+            placeId: l.id,
+            placeName: l.place_name,
+            placeAddr: l.address_name,
+            lat: Number(l.y),
+            lng: Number(l.x),
+          }
+        })),
+        arr.accuracy.map((l) => ({
+          courseId: course_list[0].course_id,
+          courseNo: course_list[0].course_no,
+          courseName: convertName[0],
+          places: {
+            placeId: l.id,
+            placeName: l.place_name,
+            placeAddr: l.address_name,
+            lat: Number(l.y),
+            lng: Number(l.x),
+          }
+        })),
+        arr.diversity.map((l) => ({
+          courseId: course_list[0].course_id,
+          courseNo: course_list[0].course_no,
+          courseName: convertName[0],
+          places: {
+            placeId: l.id,
+            placeName: l.place_name,
+            placeAddr: l.address_name,
+            lat: Number(l.y),
+            lng: Number(l.x),
+          }
+        })),
+      ];
       data={
         party: {
         partyName: party.party_name,
@@ -952,24 +990,13 @@ export class PartyController {
             lng: c.place_lng ?? 0,
           },})),
         },
-        list: list.map((l) => ({
-          courseId: course_list[0].course_id,
-          courseNo: course_list[0].course_no,
-          courseName: convertName[0],
-          places: {
-            placeId: l.id,
-            placeName: l.place_name,
-            placeAddr: l.address_name,
-            lat: Number(l.y),
-            lng: Number(l.x),
-          }
-        })),
-      };
+        list: list.flat(),
+    };
 
 
       return data;  
     }
-    list = await this.kakaoService.findCustomCoursePlaces(
+    arr = await this.kakaoService.findCustomCoursePlaces(
         party_id,
         course_list[0].course_id,
         midpoint.lat,
@@ -995,7 +1022,7 @@ export class PartyController {
         },
       })),
       },
-      list: list.map((l) => ({
+      list: arr.map((l) => ({
         placeId: l.id,
         placeName: l.place_name,
         placeAddr: l.address_name,

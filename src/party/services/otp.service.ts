@@ -131,7 +131,7 @@ export class OtpService {
       participants.map(async (p) => {
         const mode = p.transport_mode||"PUBLIC";
         const result = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${center_lat},${center_lng}`,mode,date_time);
-        return result.plan.itineraries[0].duration;
+        return result.plan.itineraries[0].duration || Infinity;
       }));
     return Math.max(...times);
   }
@@ -190,11 +190,12 @@ export class OtpService {
 
     const cutoff = `${Math.floor(maxTime / 60)}M`;
     const time = this.getIsoTime();
-
+    console.log('midmeet');
     const iso_list = await Promise.all(
       participants.map(async (p) => {
         const mode = this.getMode(p.transport_mode||"PUBLIC")
         const data = await this.getIsochrone(cutoff,`${p.start_lat},${p.start_lng}`,mode, time)
+        console.log(`등시선 로드 완료 - 참여자 ${p.participant_id}`);
         return data;
       })
     );
@@ -203,8 +204,11 @@ export class OtpService {
 
   /* 교차 영역 */
   async getCrossMid(party_id: string) {
+    console.log('교차영역 계산 시작 -', party_id);
     const all_stops = await this.loadSubwayStops();
+    
     const list = await this.getMidMeet(party_id);
+    console.log('등시선 로드 완료, 교차영역 계산 중...',list);
     let intersection:Feature<Polygon | MultiPolygon, GeoJsonProperties> | null = turf.multiPolygon([list[0].features[0].geometry.coordinates[0]]);
     
     for (let i = 1; i < list.length; i++) {
