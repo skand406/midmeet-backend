@@ -1,4 +1,9 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCourseArrayDto } from '../dto/create-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -6,10 +11,18 @@ import {
   UpdateCourseDto,
 } from '../dto/update-course.dto';
 import { instanceToPlain } from 'class-transformer';
+import { ParticipantService } from './participant.service';
+import { MailService } from '../../auth/mail.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class CourseService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private participantService: ParticipantService,
+    private mailService: MailService,
+    private userService: UserService,
+  ) {}
 
   async createCourse(
     party_id: string,
@@ -64,9 +77,25 @@ export class CourseService {
         }),
       ),
     );
-    return await this.prisma.course.findMany({
+    const course_list = await this.prisma.course.findMany({
       where: { party_id },
     });
+    const isComplete = course_list.every((course) => course.place_lat !== null);
+
+    if (isComplete) {
+      const participant_list = await this.participantService.findMany(party_id);
+      await Promise.all(
+        participant_list.map(async (p) => {
+          if (!p.user_uid) return;
+          const user = await this.userService.findById(p.user_uid);
+          if (user?.email) {
+            await this.mailService.sendCompliteMail(user.email, party_id);
+          }
+        }),
+      );
+    }
+
+    return course_list;
   }
 
   async updateCourse(

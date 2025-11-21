@@ -768,7 +768,7 @@ export class PartyController {
     const count = (await this.participantService.findMany(party_id)).length;
 
     if (party?.participant_count === count)
-      await this.mailService.sendMail(user.email, party_id);
+      await this.mailService.sendMidPointMail(user.email, party_id);
 
     return participant; // 모임 생성자 파티 참가자 테이블에 추가
   }
