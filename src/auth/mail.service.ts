@@ -104,7 +104,7 @@ export class MailService {
     });
   }
 
-  async sendMail(to: string, party_id: string) {
+  async sendMidPointMail(to: string, party_id: string) {
     const link = `${process.env.FRONT_URL}/midpoint/start/${party_id}`;
 
     await this.transporter.sendMail({
