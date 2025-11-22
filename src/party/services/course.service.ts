@@ -83,6 +83,10 @@ export class CourseService {
     const isComplete = course_list.every((course) => course.place_lat !== null);
 
     if (isComplete) {
+      await this.prisma.party.update({
+        where: { party_id },
+        data: { party_state: false },
+      });
       const participant_list = await this.participantService.findMany(party_id);
       await Promise.all(
         participant_list.map(async (p) => {

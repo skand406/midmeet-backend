@@ -1024,12 +1024,15 @@ export class PartyController {
     if (!party || !course_list) throw new NotFoundException('모임이 없습니다.');
 
     const midpoint = await this.otpService.getCrossMid(party_id);
-    await this.partyService.updatePartyType({
-      mid_place: midpoint.name,
-      mid_lat: midpoint.lat,
-      mid_lng: midpoint.lng,
-    }, party_id);
-
+    if(party.mid_place === null ){
+      await this.partyService.updatePartyType({
+        mid_place: midpoint.name,
+        mid_lat: midpoint.lat,
+        mid_lng: midpoint.lng,
+      }, party_id);
+    }
+      
+    
     let data: any = {};
     let arr: any;
 
