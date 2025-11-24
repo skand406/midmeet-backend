@@ -835,6 +835,16 @@ export class PartyController {
     },
   })
   @ApiResponse({
+    status: 406,
+    description: '참여자 저장 완료된 유저가 다시 초대 링크 접근 방지',
+    schema: {
+      example: {
+        statusCode: 406,
+        message: '이미 참여한 모임입니다.',
+      },
+    },
+  })
+  @ApiResponse({
     status: 500,
     description: '서버 내부 오류 (DB 문제 등)',
     schema: {
@@ -845,9 +855,15 @@ export class PartyController {
     },
   })
   async verifyInvite(
+    @Req() req,
     @Param('party_id') party_id: string,
     @Query('token') token: string,
   ) {
+    const uid = req.user.uid;
+    const participant = await this.participantService.findOne(uid,party_id);
+    if(participant){
+      throw new HttpException('이미 참여한 모임입니다.', 406);
+    }
     return this.participantService.verifyInviteToken(token, party_id);
   }
 
