@@ -41,6 +41,7 @@
     "geokdbush": "^2.0.1",
     "nanoid": "^5.1.6",
     "nodemailer": "^7.0.6",
+    "p-map": "^7.0.4",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",

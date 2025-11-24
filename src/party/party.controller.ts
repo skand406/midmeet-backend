@@ -923,6 +923,11 @@ export class PartyController {
           const date_time = `${party.date_time}`;
 
           const route = await this.otpService.getRoute(from, to, mode, date_time);
+          const sec = route?.plan?.itineraries[0]?.duration || 0;
+          const min = Math.floor(sec / 60);
+          const hour = Math.floor(min / 60);
+        
+
           const user = await this.userService.findById(p.user_uid);
 
           return {
@@ -930,10 +935,10 @@ export class PartyController {
             startAddr: p.start_address,
             transportMode: p.transport_mode,
             routeDetail: {
-              totalTime: '',
-              routeSteps: [],
-              startLat: '',
-              startLng: '',
+              totalTime: `${hour}시간 ${min % 60}분`,
+              routeSteps: "routeSummary",
+              startLat: p.start_lat,
+              startLng: p.start_lng,
             },
           };
         }),
@@ -1023,16 +1028,23 @@ export class PartyController {
     const course_list = await this.courseService.readCourseList(party_id);
     if (!party || !course_list) throw new NotFoundException('모임이 없습니다.');
 
-    const midpoint = await this.otpService.getCrossMid(party_id);
-    if(party.mid_place === null ){
+    const toNum = (v: any) => Number(v ?? 0);
+
+    let midpoint = {
+      name: party.mid_place ?? '',
+      lat: toNum(party.mid_lat),
+      lng: toNum(party.mid_lng),
+    };
+
+    if (!party.mid_place) {
+      midpoint = await this.otpService.getCrossMid(party_id);
       await this.partyService.updatePartyType({
-        mid_place: midpoint.name,
-        mid_lat: midpoint.lat,
-        mid_lng: midpoint.lng,
+        mid_place: midpoint.name ?? undefined,
+        mid_lat: toNum(midpoint.lat),
+        mid_lng: toNum(midpoint.lng),
       }, party_id);
     }
-      
-    
+        
     let data: any = {};
     let arr: any;
 

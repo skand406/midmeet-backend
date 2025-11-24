@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RoleType } from '@prisma/client';
+import { Prisma, RoleType } from '@prisma/client';
 import { createParticipantDto } from '../dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateParticipantDto } from '../dto/update-participant.dto';
@@ -33,9 +33,10 @@ export class ParticipantService {
     user_uid: string,
   ) {
     const code = 'ABCDEFG';
-    const { EPSG_4326_X: lng, EPSG_4326_Y: lat } =
+    
+    const { lat, lng } =
       await this.mapService.getCoordinates(createParticipantDto.start_address);
-
+        
     const participant = await this.prisma.participant.upsert({
       where: { party_id_user_uid: { party_id, user_uid } },
       update: {
@@ -100,7 +101,7 @@ export class ParticipantService {
     party_id: string,
     updateParticipantDto: UpdateParticipantDto,
   ) {
-    const { EPSG_4326_X: lat, EPSG_4326_Y: lng } =
+    const { lat, lng } =
       await this.mapService.getCoordinates(updateParticipantDto.start_address);
 
     return await this.prisma.participant.update({
