@@ -119,11 +119,11 @@ export class KakaoService {
     return r;
   }
 
-  async findAICoursePlaces(party_id: string, lat: number, lng: number) {
-    const course_list = await this.prisma.course.findMany({
-      where: { party_id },
-      orderBy: { course_no: 'asc' },
-    });
+  async findAICoursePlaces(course_list: any[], lat: number, lng: number) {
+    // const course_list = await this.prisma.course.findMany({
+    //   where: { party_id },
+    //   orderBy: { course_no: 'asc' },
+    // });
 
     // 🔥 기준별 결과 저장
     let seedDistance: { lat: number; lng: number }[] = [];

@@ -11,6 +11,7 @@ import { CourseService } from './services/course.service';
 import { OtpService } from './services/otp.service';
 import { KakaoService } from './services/kakao.service';
 import { OtpController } from './otp.controller';
+import { GuestService } from './services/guest.service';
 @Module({
   imports: [UserModule, JwtModule, HttpModule, UserModule, AuthModule],
   controllers: [PartyController, OtpController],
@@ -21,6 +22,7 @@ import { OtpController } from './otp.controller';
     CourseService,
     OtpService,
     KakaoService,
+    GuestService,
   ],
   exports: [
     ParticipantService, // OtpModule에서 필요한 서비스

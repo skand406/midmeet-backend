@@ -167,7 +167,7 @@ export class OtpService {
 
   /* 교차 영역 */
   async getCrossMid(party_id: string) {
-    console.log('교차영역 계산 시작 -', party_id);
+    //console.log('교차영역 계산 시작 -', party_id);
     const all_stops = await this.loadSubwayStops();
 
     const list = await this.getMidMeet(party_id);

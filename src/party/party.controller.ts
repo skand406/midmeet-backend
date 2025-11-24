@@ -47,6 +47,8 @@ import { MidPartyDto } from './dto/mid-data.dto';
 import { map } from 'rxjs';
 import { plainToClass } from 'class-transformer';
 import { start } from 'repl';
+import { GuestService } from './services/guest.service';
+import { GuestDto } from './dto/guest.dto';
 
 @ApiTags('party')
 @Controller('party')
@@ -60,6 +62,7 @@ export class PartyController {
     private otpService: OtpService,
     private kakaoService: KakaoService,
     private mailService: MailService,
+    private guestService: GuestService,
   ) { }
 
   @UseGuards(JwtAuthGuard)
@@ -1069,7 +1072,7 @@ export class PartyController {
     --------------------------------------------------- */
     if (party.party_type === 'AI_COURSE') {
       arr = await this.kakaoService.findAICoursePlaces(
-        party_id,
+        course_list,
         midpoint.lat,
         midpoint.lng,
       );
@@ -1254,5 +1257,10 @@ export class PartyController {
   })  
   async getPartyInfo(@Param('party_id') party_id: string) {    
     return await this.partyService.readParty(party_id); 
+  }
+
+  @Post('/guest')
+  async guestParty(@Req() req,@Body() dto: GuestDto) {
+    return await this.guestService.guestParty(dto);
   }
 }
