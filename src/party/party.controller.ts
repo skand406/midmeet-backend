@@ -861,7 +861,7 @@ export class PartyController {
   ) {
     const uid = req.user.uid;
     const participant = await this.participantService.findOne(uid,party_id);
-    if(participant){
+    if(participant?.start_address){
       throw new HttpException('이미 참여한 모임입니다.', 406);
     }
     return this.participantService.verifyInviteToken(token, party_id);
