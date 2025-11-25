@@ -17,9 +17,7 @@ export class PartyInfoGuestDto {
     @IsNotEmpty()
     party_name: string;
 
-    @IsEnum(PartyType)
-    @IsNotEmpty()
-    party_type: PartyType;
+
 }
 
 // --- 3. Participant 정보 DTO ---

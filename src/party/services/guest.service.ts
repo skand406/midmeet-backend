@@ -21,7 +21,7 @@ export class GuestService {
         return {
             party_id: randomUUID(),        // 게스트는 party_id 없음 → 생성
             party_name: dto.party_name,         // DTO의 party_name → title로 매핑
-            party_type: dto.party_type,
+            party_type: 'AI_COURSE',
             date_time: dto.date_time,
             party_state:true,
             mid_lat:new Prisma.Decimal(0),
