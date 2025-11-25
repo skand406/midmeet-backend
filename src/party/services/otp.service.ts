@@ -8,7 +8,7 @@ import {
 import * as turf from '@turf/turf';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParticipantService } from './participant.service';
-import { Party, TransportMode } from '@prisma/client';
+import { Party, TransportMode, Participant } from '@prisma/client';
 import {
   Feature,
   Polygon,
@@ -43,17 +43,17 @@ export class OtpService {
   }
 
   /* 공통 사용 데이터 */
-  private async PartyData(party_id: string) {
-    const party = await this.prismaService.party.findUnique({
-      where: { party_id },
-    });
-    if (!party) throw new NotFoundException('파티 없음');
-
-    const participants = await this.prismaService.participant.findMany({
-      where: { party_id },
-    });
-
-    if (participants.length === 0) throw new NotFoundException('참여자 없음');
+  private async PartyData(party:Party,participants:Participant[]){//party_id: string) {
+    //const party = await this.prismaService.party.findUnique({
+    //  where: { party_id },
+    //});
+    //if (!party) throw new NotFoundException('파티 없음');
+	//
+    //const participants = await this.prismaService.participant.findMany({
+    //  where: { party_id },
+    //});
+	//	
+    //if (participants.length === 0) throw new NotFoundException('참여자 없음');
 
     const date_time = `${party.date_time}`;
     const points = participants
@@ -74,7 +74,7 @@ export class OtpService {
 
   /* 참여자 이동시간 중 최댓값 */
   private async getMaxDurationTime(
-    participants,
+    participants:Participant[],
     center_lat: number,
     center_lng: number,
     date_time: string,
@@ -142,9 +142,9 @@ export class OtpService {
   }
 
   /* 모든 참여자의 등시선 */
-  async getMidMeet(party_id: string) {
-    const { participants, date_time, center_lat, center_lng, maxTime } =
-      await this.PartyData(party_id);
+  async getMidMeet(participants:Participant[],maxTime:number){//party_id: string) {
+    //const { participants, date_time, center_lat, center_lng, maxTime } =
+    //  await this.PartyData(party_id);
 
     const cutoff = `${Math.floor(maxTime / 60)}M`;
     const time = this.getIsoTime();
@@ -166,11 +166,12 @@ export class OtpService {
   }
 
   /* 교차 영역 */
-  async getCrossMid(party_id: string) {
+  async getCrossMid(party:Party,participants:Participant[]){//party_id: string) {
+    const data = await this.PartyData(party,participants);
     //console.log('교차영역 계산 시작 -', party_id);
     const all_stops = await this.loadSubwayStops();
 
-    const list = await this.getMidMeet(party_id);
+    const list = await this.getMidMeet(participants,data.maxTime);//party_id);
     console.log('등시선 로드 완료, 교차영역 계산 중...', list);
     let intersection: Feature<
       Polygon | MultiPolygon,
@@ -193,13 +194,14 @@ export class OtpService {
           turf.centerOfMass(intersection).geometry.coordinates;
         return this.getNearPoint(all_stops, center_lat, center_lng);
       }
-      return await this.getMidPoint(party_id, stops);
+      return await this.getMidPoint(participants, data.date_time, stops);//party_id, stops);
     }
 
-    const { participants, date_time, center_lat, center_lng, maxTime } =
-      await this.PartyData(party_id);
+    //const { participants, date_time, center_lat, center_lng, maxTime } =
+    //await this.PartyData(party_id);
 
-    return this.getNearPoint(all_stops, center_lat, center_lng);
+
+    return this.getNearPoint(all_stops, data.center_lat, data.center_lng);
   }
 
   /*중심점으로부터 제일 가까운 장소 */
@@ -240,9 +242,9 @@ export class OtpService {
     });
   }
   /* 최종 중간지점 */
-  async getMidPoint(party_id: string, stops: any[]) {
-    const { participants, date_time, center_lat, center_lng, maxTime } =
-      await this.PartyData(party_id);
+  async getMidPoint(participants:Participant[], date_time:string, stops:any[]){//party_id: string, stops: any[]) {
+    //const { participants, date_time, center_lat, center_lng, maxTime } =
+    //  await this.PartyData(party_id);
     const results = await Promise.all(
       stops.map(async (stop) => {
         const times = await Promise.all(

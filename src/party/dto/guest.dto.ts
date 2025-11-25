@@ -1,5 +1,5 @@
 import { PartyType, TransportMode } from "@prisma/client";
-import { IsDate, IsString, IsArray, ValidateNested, IsNotEmpty, IsEnum, IsDateString } from 'class-validator';
+import { IsDate, IsString, IsArray, ValidateNested, IsNotEmpty, IsEnum, IsDateString, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
 // 🚨 1. 외부에서 정의된 tag 타입을 import 합니다. (예시: create-course.dto.ts)
@@ -42,6 +42,10 @@ export class CourseGuestDto {
     @IsString()
     @IsNotEmpty()
     course_id: string;
+    
+    @IsNumber()
+    @IsNotEmpty()
+    course_no: number;
     
     // 외부에서 정의된 Tag DTO 사용
     @ValidateNested()

@@ -1056,7 +1056,8 @@ export class PartyController {
     };
 
     if (!party.mid_place) {
-      midpoint = await this.otpService.getCrossMid(party_id);
+      const participants = await this.participantService.findMany(party_id);
+      midpoint = await this.otpService.getCrossMid(party,participants);
       await this.partyService.updatePartyType({
         mid_place: midpoint.name ?? undefined,
         mid_lat: toNum(midpoint.lat),
