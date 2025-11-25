@@ -84,7 +84,78 @@ export class GuestService {
 
         const midpoint = await this.otpService.getCrossMid(party,participants);
 
-        return await this.kakaoService.findAICoursePlaces(courses, midpoint.lat, midpoint.lng);
+        const arr = await this.kakaoService.findAICoursePlaces(courses, midpoint.lat, midpoint.lng);
 
+        const convertName = [
+            '거리우선 추천코스',
+            '인기우선 추천코스',
+            'AI추천 코스',
+        ];
+
+        // 각 추천 유형을 course 단위로 묶기
+        const list = [
+            {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 1,
+            courseName: convertName[0],
+            places: arr.distance.map((l) => ({
+                placeId: l.course_id,
+                placeName: l.place.place_name,
+                placeAddr: l.place.address_name,
+                lat: Number(l.place.y),
+                lng: Number(l.place.x),
+            })),
+            },
+            {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 2,
+            courseName: convertName[1],
+            places: arr.accuracy.map((l) => ({
+                placeId: l.course_id,
+                placeName: l.place.place_name,
+                placeAddr: l.place.address_name,
+                lat: Number(l.place.y),
+                lng: Number(l.place.x),
+            })),
+            },
+            {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 3,
+            courseName: convertName[2],
+            places: arr.diversity.map((l) => ({
+                placeId: l.course_id,
+                placeName: l.place.place_name,
+                placeAddr: l.place.address_name,
+                lat: Number(l.place.y),
+                lng: Number(l.place.x),
+            })),
+            },
+        ];
+
+        // 최종 반환 데이터
+        const data = {
+            party: {
+            partyName: party.party_name,
+            partyDate: party.date_time,
+            midPoint: midpoint.name,
+            midPointLat: midpoint.lat,
+            midPointLng: midpoint.lng,
+            partyType: party.party_type,
+            courses: courses.map((c) => ({
+                courseNo: c.course_no,
+                courseId: c.course_id,
+                places: {
+                placeId: '',
+                placeName: c.place_name ?? '',
+                placeAddr: c.place_address ?? '',
+                lat: c.place_lat ?? 0,
+                lng: c.place_lng ?? 0,
+                },
+            })),
+            },
+            list,  // ⬅ 배열 형태로 반환됨
+        };
+
+        return data;
     }
 }    
