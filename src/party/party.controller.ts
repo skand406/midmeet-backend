@@ -1260,7 +1260,119 @@ export class PartyController {
     return await this.partyService.readParty(party_id); 
   }
 
+ // 게스트용
   @Post('/guest')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '게스트 모임 생성' })
+  @ApiBody({ type: GuestDto, description: '게스트 모임 생성에 필요한 정보(토큰 필요없음)' })
+  @ApiResponse({
+    status: 200,
+    description: '게스트 모임 생성 성공',
+    schema: {
+      example: {
+      "statusCode": 200,
+      "data": {
+          "party": {
+              "partyName": "정윤초현",
+              "partyDate": "2025-11-27T17:30:00",
+              "midPoint": "달월",
+              "midPointLat": 37.37968,
+              "midPointLng": 126.74518,
+              "partyType": "AI_COURSE",
+              "courses": [
+                  {
+                      "courseNo": 1,
+                      "courseId": "1764057612380",
+                      "places": {
+                          "placeId": "",
+                          "placeName": "",
+                          "placeAddr": "",
+                          "lat": 0,
+                          "lng": 0
+                      }
+                  },
+                  {
+                      "courseNo": 2,
+                      "courseId": "1764057645831",
+                      "places": {
+                          "placeId": "",
+                          "placeName": "",
+                          "placeAddr": "",
+                          "lat": 0,
+                          "lng": 0
+                      }
+                  }
+              ]
+          },
+          "list": [
+              {
+                  "courseId": "241040",
+                  "courseNo": 1,
+                  "courseName": "거리우선 추천코스",
+                  "places": [
+                      {
+                          "placeId": "1764057612380",
+                          "placeName": "평이담백 뼈칼국수 신세계아울렛시흥프리미엄",
+                          "placeAddr": "경기 시흥시 배곧동 36",
+                          "lat": 37.3797942465734,
+                          "lng": 126.73835989687
+                      },
+                      {
+                          "placeId": "1764057645831",
+                          "placeName": "소바공방 신세계아울렛시흥프리미엄",
+                          "placeAddr": "경기 시흥시 배곧동 36",
+                          "lat": 37.379701214667634,
+                          "lng": 126.7382574734017
+                      }
+                  ]
+              },
+              {
+                  "courseId": "597064",
+                  "courseNo": 2,
+                  "courseName": "인기우선 추천코스",
+                  "places": [
+                      {
+                          "placeId": "1764057612380",
+                          "placeName": "만석씨푸드 본점",
+                          "placeAddr": "경기 시흥시 배곧동 18-7",
+                          "lat": 37.3823736934317,
+                          "lng": 126.735847666764
+                      },
+                      {
+                          "placeId": "1764057645831",
+                          "placeName": "히바린 신세계아울렛시흥프리미엄",
+                          "placeAddr": "경기 시흥시 배곧동 36",
+                          "lat": 37.37991044534868,
+                          "lng": 126.73591276097015
+                      }
+                  ]
+              },
+              {
+                  "courseId": "217073",
+                  "courseNo": 3,
+                  "courseName": "AI추천 코스",
+                  "places": [
+                      {
+                          "placeId": "1764057612380",
+                          "placeName": "정든한우 소머리국밥 배곧신도시점",
+                          "placeAddr": "경기 시흥시 배곧동 18-4",
+                          "lat": 37.382261905478764,
+                          "lng": 126.73501476645305
+                      },
+                      {
+                          "placeId": "1764057645831",
+                          "placeName": "사보텐 신세계배곧점",
+                          "placeAddr": "경기 시흥시 배곧동 36",
+                          "lat": 37.37990079861863,
+                          "lng": 126.73846453181277
+                      }
+                  ]
+              }
+          ]
+        },
+      },
+    },
+  })
   async guestParty(@Req() req,@Body() dto: GuestDto) {
     return await this.guestService.guestParty(dto);
   }

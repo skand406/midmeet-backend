@@ -129,6 +129,7 @@ export class OtpService {
   ) {
     const link = `${process.env.OTP_URL}/otp/traveltime/isochrone`;
     const res = await this.httpService.axiosRef.get(link, {
+      timeout: 20000,
       params: {
         batch: true,
         location: location,
@@ -151,17 +152,21 @@ export class OtpService {
     console.log('midmeet');
     const iso_list = await Promise.all(
       participants.map(async (p) => {
-        const mode = this.getMode(p.transport_mode || 'PUBLIC');
-        const data = await this.getIsochrone(
-          cutoff,
-          `${p.start_lat},${p.start_lng}`,
-          mode,
-          time,
+        const mode = this.getMode(p.transport_mode || "PUBLIC");
+        const key = `${cutoff}-${p.start_lat}-${p.start_lng}-${mode}`;
+
+        return await this.cachedIso(
+          key,
+          () => this.getIsochrone(
+            cutoff,
+            `${p.start_lat},${p.start_lng}`,
+            mode,
+            time
+          )
         );
-        console.log(`등시선 로드 완료 - 참여자 ${p.participant_id}`);
-        return data;
-      }),
+      })
     );
+
     return iso_list;
   }
 
@@ -242,11 +247,11 @@ export class OtpService {
     });
   }
   /* 최종 중간지점 */
-  async getMidPoint(participants:Participant[], date_time:string, stops:any[]){//party_id: string, stops: any[]) {
-    //const { participants, date_time, center_lat, center_lng, maxTime } =
-    //  await this.PartyData(party_id);
+  async getMidPoint(participants: Participant[], date_time: string, stops: any[]) {
     const results = await Promise.all(
       stops.map(async (stop) => {
+        
+        // 각 참여자 이동 시간
         const times = await Promise.all(
           participants.map(async (p) => {
             const mode = p.transport_mode || 'PUBLIC';
@@ -257,17 +262,52 @@ export class OtpService {
               date_time,
             );
             if (!time.plan || !time.plan.itineraries?.length) return Infinity;
-
             return time.plan.itineraries[0].duration;
           }),
         );
+
+
+        // 유효 값만 필터
         const valid = times.filter((t) => t < Infinity);
+        // ❗ 모든 참여자가 도달한 경우만 유지
+        if (valid.length !== participants.length) {
+          return { ...stop, avg: Infinity, std: Infinity };
+        }
+
+        // 평균
         const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
 
-        return { ...stop, avg };
+        // 표준편차 계산
+        const variance =
+          valid.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / valid.length;
+        const std = Math.sqrt(variance);
+
+        return { ...stop, avg, std };
       }),
     );
+    console.log('중간지점 후보 계산 완료:', results.map(r => ({id:r.id,avg:r.avg,std:r.std})));
+    // **표준편차 → 평균 → 순으로 정렬**
+    return results.sort((a, b) => {
+      if (a.std === b.std) return a.avg - b.avg;
+      return a.std - b.std;
+    })[0];
+}
 
-    return results.sort((a, b) => a.avg - b.avg)[0];
+
+  private isoCache = new Map<string, any>();
+  //private routeCache = new Map<string, any>();
+  private async cachedIso(key: string, fn: () => Promise<any>) {
+    if (this.isoCache.has(key)) return this.isoCache.get(key);
+    const data = await fn();
+    this.isoCache.set(key, data);
+    return data;
   }
+
+  // private async cachedRoute(key: string, fn: () => Promise<any>) {
+  //   if (this.routeCache.has(key)) return this.routeCache.get(key);
+  //   const data = await fn();
+  //   this.routeCache.set(key, data);
+  //   return data;
+  // }
+
 }
