@@ -8,8 +8,9 @@ import { ParticipantService } from "./participant.service";
 import { PartyService } from "./party.service";
 import { Course, Participant, Party, Prisma } from "@prisma/client";
 import { tag } from "../dto/create-course.dto";
+import { Injectable } from '@nestjs/common';
 
-
+@Injectable()
 export class GuestService {
     constructor(
         private otpService:OtpService,
