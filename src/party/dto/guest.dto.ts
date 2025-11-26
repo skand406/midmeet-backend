@@ -1,55 +1,128 @@
-import { PartyType, TransportMode } from "@prisma/client";
-import { IsDate, IsString, IsArray, ValidateNested, IsNotEmpty, IsEnum, IsDateString, IsNumber } from 'class-validator';
+
+import { PartyType, RoleType, TransportMode } from "@prisma/client";
+import { IsDate, IsString, IsArray, ValidateNested, IsNotEmpty, IsEnum, IsDateString, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 // 🚨 1. 외부에서 정의된 tag 타입을 import 합니다. (예시: create-course.dto.ts)
 // 이 파일은 'tag' 타입이 정의된 실제 경로로 대체해야 합니다.
 // 'tag'가 클래스라면 아래처럼 정의합니다.
 import { tag } from "./create-course.dto"; 
-
 // --- 2. Party 정보 DTO ---
 export class PartyInfoGuestDto {
-    @IsDateString()
-    @IsNotEmpty()
-    date_time: Date;
-
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    party_name: string;
+    party_id?: string;
 
+    @IsOptional()
+    @IsDateString()
+    date_time?: Date;
 
+    @IsOptional()
+    @IsString()
+    party_name?: string;
+
+    @IsOptional()
+    party_type?: PartyType;
+
+    @IsOptional()
+    party_strate?: boolean;
+
+    @IsOptional()
+    @IsNumber()
+    participant_count?: number;
+
+    @IsOptional()
+    @IsNumber()
+    mid_lat?: number;
+
+    @IsOptional()
+    @IsNumber()
+    mid_lng?: number;
+
+    @IsOptional()
+    @IsString()
+    mid_place?: string;
 }
+
+
 
 // --- 3. Participant 정보 DTO ---
 export class ParticipantGuestDto {
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    participant_name: string;
+    participant_id?: string;
 
-    @IsEnum(TransportMode) // Prisma Enum 사용
-    @IsNotEmpty()
-    transport_mode: TransportMode;
-
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    start_address: string;
+    party_id?: string;
+
+    @IsOptional()
+    @IsString()
+    participant_name?: string;
+
+    @IsOptional()
+    @IsEnum(TransportMode)
+    transport_mode?: TransportMode;
+
+    @IsOptional()
+    role?: RoleType;
+
+    @IsOptional()
+    @IsString()
+    code?: string;
+
+    @IsOptional()
+    @IsNumber()
+    start_lat?: number;
+
+    @IsOptional()
+    @IsNumber()
+    start_lng?: number;
+
+    @IsOptional()
+    @IsString()
+    start_address?: string;
 }
+
+
 
 // --- 4. Courses 정보 DTO ---
 export class CourseGuestDto {
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    course_id: string;
-    
+    course_id?: string;
+
+    @IsOptional()
+    @IsString()
+    party_id?: string;
+
+    @IsOptional()
+    @IsString()
+    place_name?: string;
+
+    @IsOptional()
+    @IsString()
+    place_address?: string;
+
+    @IsOptional()
     @IsNumber()
-    @IsNotEmpty()
-    course_no: number;
-    
-    // 외부에서 정의된 Tag DTO 사용
+    course_no?: number;
+
+    @IsOptional()
     @ValidateNested()
-    @Type(() => tag) // Tag DTO로 타입 변환
-    @IsNotEmpty()
-    tag: tag; // 이제 tag는 TagDto의 인스턴스가 됩니다.
+    @Type(() => tag)
+    tag?: tag;
+
+    @IsOptional()
+    course_view?: boolean;
+
+    @IsOptional()
+    @IsNumber()
+    place_lat?: number;
+
+    @IsOptional()
+    @IsNumber()
+    place_lng?: number;
 }
 
 

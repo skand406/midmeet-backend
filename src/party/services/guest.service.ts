@@ -1,3 +1,4 @@
+
 import { randomUUID } from "crypto";
 import { CourseGuestDto, GuestDto, ParticipantGuestDto, PartyInfoGuestDto } from "../dto/guest.dto";
 import { CourseService } from "./course.service";
@@ -25,24 +26,31 @@ export class GuestService {
             party_type: 'AI_COURSE',
             date_time: dto.date_time,
             party_state:true,
-            mid_lat:new Prisma.Decimal(0),
-            mid_lng:new Prisma.Decimal(0),
-            mid_place:'서울역',
+            mid_lat:dto.mid_lat ? new Prisma.Decimal(dto.mid_lat) : new Prisma.Decimal(0),
+            mid_lng:dto.mid_lng ? new Prisma.Decimal(dto.mid_lng) : new Prisma.Decimal(0),
+            mid_place:dto.mid_place,
             participant_count:0,
         } as Party;
     }
 
     // --- 2) Participant 변환 ---
     private async toParticipantModel( dto: ParticipantGuestDto, party_id: string): Promise<Participant> {
-        const { lng, lat } = await this.mapService.getCoordinates(dto.start_address);
+        let lat = null;
+        let lng = null;
 
+        // 주소 있을 때만 좌표 변환
+        if (dto.start_address) {
+            const coord = await this.mapService.getCoordinates(dto.start_address);
+            lat = coord.lat;
+            lng = coord.lng;
+        }
         return {
             participant_id: randomUUID(),  // 게스트 참여자 id 생성
             party_id,
-            user_uid: '',                  // 게스트는 사용자 uid 없음
+            user_uid: dto.participant_name,                  // 게스트는 사용자 uid 없음
             participant_name: dto.participant_name, // 필요하면 저장
             start_address: dto.start_address,
-            code: null,  // ✨ 반드시 포함
+            code: null,  
             start_lat: lat,
             start_lng: lng,
             transport_mode: dto.transport_mode,
@@ -58,10 +66,10 @@ export class GuestService {
             course_no: dto.course_no,                  // 게스트는 번호 없음 → 1로 고정 or index
             tag: dto.tag as unknown as Prisma.JsonValue,                  // 태그 그대로 전달
 
-            place_name: null,              // Kakao가 찾아줌
-            place_lat: null,
-            place_lng: null,
-            place_address: null,
+            place_name: dto.place_name,              // Kakao가 찾아줌
+            place_lat: dto.place_lat ? new Prisma.Decimal(dto.place_lat) : new Prisma.Decimal(0),
+            place_lng: dto.place_lng ? new Prisma.Decimal(dto.place_lng) : new Prisma.Decimal(0),
+            place_address: dto.place_address,
             course_view: true,
         } as Course;
     }
@@ -78,7 +86,7 @@ export class GuestService {
 
         // Course 변환
         const courses = dto.courses.map((c) =>
-        this.toCourseModel(c, party.party_id),
+            this.toCourseModel(c, party.party_id),
         );
 
 
@@ -157,5 +165,70 @@ export class GuestService {
         };
 
         return data;
+    }
+
+    async guestResult(dto: GuestDto){
+        const party = this.toPartyModel(dto.party);
+        const participants = await Promise.all(
+            dto.participants.map((p) =>
+                this.toParticipantModel(p, party.party_id),
+            ),
+        );        
+        const courses = await Promise.all(
+            dto.courses.map((c) =>
+                this.toCourseModel(c, party.party_id),
+            ),
+        );        
+        const members = await Promise.all(
+            participants.map(async (p) => {
+                const from = `${p.start_lat},${p.start_lng}`;
+                const to = `${courses[0].place_lat},${courses[0].place_lng}`;
+                const mode = p.transport_mode || 'PUBLIC';
+                const date_time = `${party.date_time}`;
+    
+                const route = await this.otpService.getRoute(from, to, mode, date_time);
+                const sec = route?.plan?.itineraries[0]?.duration || 0;
+                const min = Math.floor(sec / 60);
+                const hour = Math.floor(min / 60);
+            
+    
+                console.log(route.plan.itineraries);
+                return {
+                    name: p.user_uid,
+                    startAddr: p.start_address,
+                    transportMode: p.transport_mode,
+                    routeDetail: {
+                        totalTime: `${hour}시간 ${min % 60}분`,
+                        routeSteps: "routeSummary",
+                        startLat: p.start_lat,
+                        startLng: p.start_lng,
+                    },
+                };
+            }),
+        );
+
+        // 1-2) 반환
+        return {
+            role: '',
+            party: {
+                partyName: party.party_name,
+                partyDate: party.date_time,
+                midPoint: party.mid_place,
+                midPointLat: party.mid_lat,
+                midPointLng: party.mid_lng,
+                courses: courses.map((c) => ({
+                courseId: c.course_id,
+                courseNo: c.course_no,
+                places: {
+                    placeId: '',
+                    placeName: c.place_name,
+                    placeAddr: c.place_address,
+                    lat: c.place_lat,
+                    lng: c.place_lng,
+                },
+                })),
+            },
+            member: members,
+        }
     }
 }    

@@ -1,3 +1,4 @@
+
 import {
   Controller,
   Get,
@@ -1373,7 +1374,13 @@ export class PartyController {
       },
     },
   })
-  async guestParty(@Req() req,@Body() dto: GuestDto) {
+  async guestParty(@Body() dto: GuestDto) {
     return await this.guestService.guestParty(dto);
+  }
+
+  @Post('/guest/result')
+  @HttpCode(HttpStatus.OK)
+  async guestResult(@Body() dto: GuestDto) {
+    return await this.guestService.guestResult(dto);
   }
 }
