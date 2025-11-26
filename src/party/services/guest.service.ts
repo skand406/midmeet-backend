@@ -71,6 +71,7 @@ export class GuestService {
             place_lng: dto.place_lng ? new Prisma.Decimal(dto.place_lng) : new Prisma.Decimal(0),
             place_address: dto.place_address,
             course_view: true,
+            place_url: dto.place_url,
         } as Course;
     }
 

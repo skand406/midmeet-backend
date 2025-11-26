@@ -123,6 +123,10 @@ export class CourseGuestDto {
     @IsOptional()
     @IsNumber()
     place_lng?: number;
+
+    @IsOptional()
+    @IsString()
+    place_url?: string;
 }
 
 

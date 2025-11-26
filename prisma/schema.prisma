@@ -102,6 +102,7 @@ model Course {
   course_view   Boolean       @default(true)
   place_lat     Decimal?      @db.Decimal(9, 6)
   place_lng     Decimal?      @db.Decimal(9, 6)
+  place_url     String? 
   
   party Party @relation(fields: [party_id], references: [party_id], onDelete: Cascade)
   @@unique([party_id, course_no])

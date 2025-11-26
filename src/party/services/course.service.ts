@@ -73,6 +73,7 @@ export class CourseService {
             place_lat: course.place_lat,
             place_lng: course.place_lng,
             course_view: course.course_view,
+            place_url: course.place_url,
           },
         }),
       ),
@@ -114,6 +115,9 @@ export class CourseService {
         place_name: updateCourse.place_name,
         course_view: updateCourse.course_view,
         course_no: updateCourse.course_no,
+        place_lat: updateCourse.place_lat,
+        place_lng: updateCourse.place_lng,
+        place_url: updateCourse.place_url,
       },
     });
     return await this.prisma.course.findMany({

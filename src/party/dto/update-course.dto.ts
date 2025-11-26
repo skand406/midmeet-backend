@@ -59,6 +59,13 @@ export class UpdateCourseDto {
   @IsNumber()
   @Type(() => Number)
   place_lng?: number;
+
+  @ApiProperty({
+    example: 'http://place.map.kakao.com/12345678',
+    description: '장소 상세 URL',
+  })
+  @IsString()
+  place_url?: string;
 }
 
 export class UpdateCourseArrayDto {
@@ -71,6 +78,7 @@ export class UpdateCourseArrayDto {
       course_view: any;
       place_lat: number;
       place_lng: number;
+      place_url: string;
     },
   ): any {
     throw new Error('Method not implemented.');
@@ -85,6 +93,9 @@ export class UpdateCourseArrayDto {
           place_address: '인천 연수구 학나래로6번길 35 1층 신부산갈매기',
           place_name: '신부산갈매기',
           course_view: true,
+          place_lat: 37.450354677762,
+          place_lng: 126.65915614333,
+          place_url: 'http://place.map.kakao.com/12345678', 
         },
       ],
     },
