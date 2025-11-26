@@ -209,7 +209,7 @@ export class GuestService {
                 };
             }),
         );
-
+        
         // 1-2) 반환
         return {
             role: '',

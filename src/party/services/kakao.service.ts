@@ -5,6 +5,7 @@ import { OtpService } from './otp.service';
 import { NotFoundError } from 'rxjs';
 import { CourseService } from './course.service';
 import type { tag as CourseTag } from '../dto/create-course.dto';
+import * as http from 'http';
 
 @Injectable()
 export class KakaoService {
@@ -24,11 +25,13 @@ export class KakaoService {
     sort: string,
   ) {
     const url = `${process.env.KAKAO_URL}/keyword.json`;
+    const agent = new http.Agent({ keepAlive: false });
 
     const res = await this.httpService.axiosRef.get(url, {
       headers: {
         Authorization: `KakaoAK ${process.env.KAKAO_REST_KEY}`,
       },
+      httpAgent: agent,
       params: {
         query: keyword,
         category_group_code: code,
@@ -50,11 +53,13 @@ export class KakaoService {
     sort: string,
   ) {
     const url = `${process.env.KAKAO_URL}/category.json`;
+    const agent = new http.Agent({ keepAlive: false });
 
     const res = await this.httpService.axiosRef.get(url, {
       headers: {
         Authorization: `KakaoAK ${process.env.KAKAO_REST_KEY}`,
       },
+      httpAgent: agent,
       params: {
         category_group_code: code,
         x: lng,

@@ -21,6 +21,7 @@ import csv from 'csv-parser';
 import * as path from 'path';
 import Flatbush from 'flatbush';
 import geokdbush from 'geokdbush';
+import * as http from 'http';
 
 @Injectable()
 export class OtpService {
@@ -100,10 +101,14 @@ export class OtpService {
     const [date, time] = date_time.split('T');
 
     const mode = this.getMode(transport_mode || 'PUBLIC');
+    const agent = new http.Agent({ keepAlive: false });
 
     const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
     const res = await this.httpService.axiosRef.get(link, {
+      timeout: 10000,   // 안전하게 timeout 설정
+      httpAgent: agent, // <-- 🔥 핵심
+
       params: {
         fromPlace: from,
         toPlace: to,
@@ -127,9 +132,12 @@ export class OtpService {
     mode: string,
     time: string,
   ) {
+    const agent = new http.Agent({ keepAlive: false });
+
     const link = `${process.env.OTP_URL}/otp/traveltime/isochrone`;
     const res = await this.httpService.axiosRef.get(link, {
       timeout: 20000,
+      httpAgent: agent,
       params: {
         batch: true,
         location: location,

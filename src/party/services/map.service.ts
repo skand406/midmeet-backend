@@ -1,6 +1,7 @@
 import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import * as http from 'http';
 
 // ✅ 카카오 REST API 키는 서버 환경 변수에서 가져옵니다.
 
@@ -32,8 +33,10 @@ export class MapService {
   async getCoordinates(address: string){
   
     const url = `${process.env.KAKAO_URL}/address.json`;
+    const agent = new http.Agent({ keepAlive: false });
 
     const res = await this.httpService.axiosRef.get(url, {
+      httpAgent: agent,
       headers: {
         Authorization: `KakaoAK ${process.env.KAKAO_REST_KEY}`,
       },

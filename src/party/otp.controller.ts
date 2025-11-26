@@ -17,21 +17,21 @@ export class OtpController {
   async otpTest() {
     const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
-    const res = await this.httpService.axiosRef.get(link, {
-      params: {
-        fromPlace: '37.5028031,126.7371047',
-        toPlace: '37.4500221,126.653488',
-        mode: 'WALK,TRANSIT',
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toISOString().split('T')[1].split('.')[0],
-        arriveBy: false,
-        numItineraries: 5,
-      },
-      headers: {
-        Accept: 'application/json', // ✅ HTML 말고 JSON만 받기
-      },
-    });
-    return res.data;
+    // const res = await this.httpService.axiosRef.get(link, {
+    //   params: {
+    //     fromPlace: '37.5028031,126.7371047',
+    //     toPlace: '37.4500221,126.653488',
+    //     mode: 'WALK,TRANSIT',
+    //     date: new Date().toISOString().split('T')[0],
+    //     time: new Date().toISOString().split('T')[1].split('.')[0],
+    //     arriveBy: false,
+    //     numItineraries: 5,
+    //   },
+    //   headers: {
+    //     Accept: 'application/json', // ✅ HTML 말고 JSON만 받기
+    //   },
+    // });
+    // return res.data;
     // return this.otpService.getRoute(
     //   '37.5028031,126.7371047',
     //   '37.4500221,126.653488',
