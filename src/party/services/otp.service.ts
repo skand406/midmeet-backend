@@ -201,6 +201,7 @@ export class OtpService {
       );
     }
     if (intersection) {
+      console.log('교차영역 계산 완료, 지하철역 탐색 중...');
       const stops = await this.getSubwayList(intersection);
       if (stops.length === 0) {
         const [center_lng, center_lat] =
@@ -209,7 +210,7 @@ export class OtpService {
       }
       return await this.getMidPoint(participants, data.date_time, stops);//party_id, stops);
     }
-
+    console.log('교차영역 없음, 중심점 탐색 중...');
     //const { participants, date_time, center_lat, center_lng, maxTime } =
     //await this.PartyData(party_id);
 
