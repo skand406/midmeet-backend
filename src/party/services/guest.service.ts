@@ -190,16 +190,19 @@ export class GuestService {
                 const sec = route?.plan?.itineraries[0]?.duration || 0;
                 const min = Math.floor(sec / 60);
                 const hour = Math.floor(min / 60);
-            
-    
-                console.log(route.plan.itineraries);
+                
+                const fastest = route.plan.itineraries.reduce((a, b) => a.duration < b.duration ? a : b );
+
+                const formattedLegs = this.formatLegs(fastest.legs);
+                //console.log(route.plan.itineraries[0].legs);
                 return {
                     name: p.user_uid,
                     startAddr: p.start_address,
                     transportMode: p.transport_mode,
                     routeDetail: {
                         totalTime: `${hour}시간 ${min % 60}분`,
-                        routeSteps: "routeSummary",
+                        routeSteps:[ `${route.plan.itineraries[0].transfers}번 환승`
+                                    , ...formattedLegs],
                         startLat: p.start_lat,
                         startLng: p.start_lng,
                     },
@@ -231,4 +234,38 @@ export class GuestService {
             member: members,
         }
     }
+    private formatLegs(legs: any[]) {
+        return legs.map((leg, idx) => {
+            const n = idx + 1;
+            const from = leg.from.name;
+            const to = leg.to.name;
+            const dist = Math.round(leg.distance);
+            const min = Math.round(leg.duration / 60);
+
+            // ---- 교통수단 이름 매핑 ----
+            const routeType = leg.routeType;
+            const routeShortName = leg.routeShortName || leg.route || "";
+
+            const modeName = !leg.transitLeg
+            ? "WALK"
+            : routeType === 3
+            ? "BUS"
+            : routeType === 1
+            ? "SUBWAY"
+            : routeType === 0
+            ? "TRAM"
+            : routeType === 2
+            ? "RAIL"
+            : "TRANSIT";
+
+            // ---- WALK ----
+            if (!leg.transitLeg) {
+            return `Leg ${n}: WALK (${from} → ${to})\n거리 ${dist}m\n약 ${min}분`;
+            }
+
+            // ---- TRANSIT ----
+            return `Leg ${n}: ${modeName} ${routeShortName}\n${from} → ${to}`;
+        });
+    }
+
 }    
