@@ -277,7 +277,20 @@ export class GuestService {
                 const fastest = route.plan.itineraries.reduce((a, b) => a.duration < b.duration ? a : b );
 
                 const formattedLegs = this.commonSerivce.formatLegs(fastest.legs);
-                //console.log(route.plan.itineraries[0].legs);
+                if (route.plan.itineraries.length === 0) {
+                    return {
+                        name: p.user_uid,
+                        startAddr: p.start_address,
+                        transportMode: p.transport_mode,
+                        routeDetail: {
+                            totalTime: '경로 없음',
+                            routeSteps: [],
+                            startLat: p.start_lat,
+                            startLng: p.start_lng,
+                        },
+                    };
+                }
+
                 return {
                     name: p.user_uid,
                     startAddr: p.start_address,

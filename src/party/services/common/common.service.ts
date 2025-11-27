@@ -63,12 +63,12 @@ export class CommonService {
             const imageUrl = await page.evaluate((selector) => {
                 const imgElement = document.querySelector(selector);
                 if (imgElement) {
-                let src = imgElement.getAttribute('src');
-                // 프로토콜 상대 경로일 경우 'https:' 추가
-                if (src && src.startsWith('//')) {
-                    src = 'https:' + src;
-                }
-                return src;
+                    let src = imgElement.getAttribute('src');
+                    // 프로토콜 상대 경로일 경우 'https:' 추가
+                    if (src && src.startsWith('//')) {
+                        src = 'https:' + src;
+                    }
+                    return src;
                 }
                 return null;
             }, targetSelector);
@@ -82,11 +82,8 @@ export class CommonService {
         } catch (error) {
             console.error('카카오 스크래핑 오류:', error);
             // Puppeteer 타임아웃, 셀렉터 찾기 실패 등 다양한 에러 처리
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-            throw new InternalServerErrorException('이미지 추출 중 서버 오류가 발생했습니다.');
-            } 
+            return '';  // ← 어떤 에러든 빈 문자열만 반환
+        }
         finally {
             if (browser) {
                 await browser.close();

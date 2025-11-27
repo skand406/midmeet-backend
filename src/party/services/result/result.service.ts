@@ -54,24 +54,40 @@ export class ResultService {
             const date_time = `${party.date_time}`;
 
             const route = await this.otpService.getRoute(from, to, mode, date_time);
-            const sec = route?.plan?.itineraries[0]?.duration || 0;
-            const min = Math.floor(sec / 60);
-            const hour = Math.floor(min / 60);
-            const fastest = route.plan.itineraries.reduce((a, b) => (a.duration < b.duration ? a : b));
-            const formattedLegs = this.guestService.formatLegs(fastest.legs);
             const user = await this.userService.findById(p.user_uid);
 
-            return {
-                name: user?.name ?? '알 수 없음',
-                startAddr: p.start_address,
-                transportMode: p.transport_mode,
-                routeDetail: {
-                    totalTime: `${hour}시간 ${min % 60}분`,
-                    routeSteps: [`${fastest.transfers}번 환승`, ...formattedLegs],
-                    startLat: p.start_lat,
-                    startLng: p.start_lng,
-                },
-            };
+            if (route.plan.itineraries.length === 0) {
+                return {
+                    name: user?.name ?? '알수없음',
+                    startAddr: p.start_address,
+                    transportMode: p.transport_mode,
+                    routeDetail: {
+                        totalTime: '경로 없음',
+                        routeSteps: [],
+                        startLat: p.start_lat,
+                        startLng: p.start_lng,
+                    },
+                };
+            }
+            else{
+                const sec = route?.plan?.itineraries[0]?.duration || 0;
+                const min = Math.floor(sec / 60);
+                const hour = Math.floor(min / 60);
+                const fastest = route.plan.itineraries.reduce((a, b) => (a.duration < b.duration ? a : b));
+                const formattedLegs = this.commonService.formatLegs(fastest.legs);
+
+                return {
+                    name: user?.name ?? '알 수 없음',
+                    startAddr: p.start_address,
+                    transportMode: p.transport_mode,
+                    routeDetail: {
+                        totalTime: `${hour}시간 ${min % 60}분`,
+                        routeSteps: [`${fastest.transfers}번 환승`, ...formattedLegs],
+                        startLat: p.start_lat,
+                        startLng: p.start_lng,
+                    },
+                };
+            }   
         };
 
         /* ------------------------------
