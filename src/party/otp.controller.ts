@@ -1,8 +1,10 @@
 import { Controller, Get, Res } from '@nestjs/common';
-import { OtpService } from './services/otp.service';
-import { KakaoService } from './services/kakao.service';
-import { MapService } from './services/map.service';
+import { OtpService } from './services/otp/otp.service';
+import { KakaoService } from './services/kakao/kakao.service';
+import { MapService } from './services/map/map.service';
 import { HttpService } from '@nestjs/axios';
+import { GuestService } from './services/guest.service';
+import { CommonService } from './services/common/common.service';
 
 @Controller('otp')
 export class OtpController {
@@ -11,11 +13,15 @@ export class OtpController {
     private kakaoService: KakaoService,
     private mapService: MapService,
     private httpService: HttpService,
+    private guestService: GuestService,
+    private commonService:CommonService
   ) {}
 
   @Get()
   async otpTest() {
-    const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
+    
+    return await this.commonService.getPlaceImageUrl('https://place.map.kakao.com/1430592874');
+    //const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
     // const res = await this.httpService.axiosRef.get(link, {
     //   params: {
@@ -55,11 +61,23 @@ export class OtpController {
 
   @Get('/route')
   async routeTest() {
-    return this.otpService.getRoute(
-      '37.5585,126.9368',
-      '37.5033,126.7660',
+    const result = await this.otpService.getRoute(
+      '37.503060,126.736769',
+      '37.451482,126.651351',
       'PUBLIC',
       '2025-11-14T08:00:00',
     );
+    return result.plan.itineraries.map((r) => {
+      const formattedLegs = this.commonService.formatLegs(r.legs);
+
+      // 2. 새로운 객체를 만들어서 반환
+      return {
+        transfers: r.transfers, // 환승 횟수
+        totalDuration: r.duration, // 총 소요 시간 (초 단위)
+        formattedSteps: formattedLegs, // 가공된 경로 단계
+        // 필요하다면 원본 객체의 다른 필드도 추가
+        // originalItinerary: r
+      };
+    });
   }
 }
