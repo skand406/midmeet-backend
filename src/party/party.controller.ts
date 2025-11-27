@@ -1089,7 +1089,6 @@ export class PartyController {
     @Query('lng') lng: number,
   ) {
     const party = await this.partyService.readParty(party_id);
-    console.log('코스 수정', party_id, course_id);
     const list = await this.kakaoService.findCustomCoursePlaces(
       party_id,
       course_id,

@@ -39,6 +39,8 @@ export class KakaoService {
         y: lat,
         radius: radius,
         sort: sort,
+        size:5
+
       },
     });
     console.log(url);
@@ -66,6 +68,7 @@ export class KakaoService {
         y: lat,
         radius: radius,
         sort: sort,
+        size:5
       },
     });
     console.log(url);
@@ -259,7 +262,7 @@ export class KakaoService {
         'accuracy',
       );
       places.push(...res);
-
+      console.log(places[0])
       if (res.length === 0) {
         const cat = await this.kakaoCategorySearch(
           lat,

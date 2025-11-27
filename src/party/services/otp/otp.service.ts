@@ -82,7 +82,10 @@ export class OtpService {
     const times = await Promise.all(
       participants.map(async (p) => {
         const mode = p.transport_mode||"PUBLIC";
-        const result = await this.getRoute(`${p.start_lat},${p.start_lng}`,`${center_lat},${center_lng}`,mode,date_time);
+        const result = await this.cachedRoute(
+          `${p.start_lat}-${p.start_lng}-${center_lat}-${center_lng}-${mode}-${date_time}`,
+          () => this.getRoute(`${p.start_lat},${p.start_lng}`, `${center_lat},${center_lng}`, mode, date_time)
+        );
         const duration = Math.min( ...(result?.plan?.itineraries?.map(i => i.duration) ?? [Infinity]));
 
         return duration;
@@ -105,7 +108,7 @@ export class OtpService {
     const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
     const res = await this.httpService.axiosRef.get(link, {
-      timeout: 10000,   // 안전하게 timeout 설정
+      timeout: 20000,   // 안전하게 timeout 설정
       httpAgent: agent, // <-- 🔥 핵심
 
       params: {
@@ -256,6 +259,7 @@ export class OtpService {
   }
   /* 최종 중간지점 */
   async getMidPoint(participants: Participant[], date_time: string, stops: any[]) {
+    console.log(stops.length);
     const results = await Promise.all(
       stops.map(async (stop) => {
         
@@ -263,11 +267,14 @@ export class OtpService {
         const times = await Promise.all(
           participants.map(async (p) => {
             const mode = p.transport_mode || 'PUBLIC';
-            const time = await this.getRoute(
-              `${p.start_lat},${p.start_lng}`,
-              `${stop.lat},${stop.lng}`,
-              mode,
-              date_time,
+            const time = await this.cachedRoute(
+              `${p.start_lat}-${p.start_lng}-${stop.lat}-${stop.lng}-${mode}-${date_time}`,
+              () => this.getRoute(
+                `${p.start_lat},${p.start_lng}`,
+                `${stop.lat},${stop.lng}`,
+                mode,
+                date_time
+              )
             );
             if (!time.plan || !time.plan.itineraries?.length) return Infinity;
             return time.plan.itineraries[0].duration;
@@ -303,7 +310,7 @@ export class OtpService {
 
 
   private isoCache = new Map<string, any>();
-  //private routeCache = new Map<string, any>();
+  private routeCache = new Map<string, any>();
   private async cachedIso(key: string, fn: () => Promise<any>) {
     if (this.isoCache.has(key)) return this.isoCache.get(key);
     const data = await fn();
@@ -311,11 +318,11 @@ export class OtpService {
     return data;
   }
 
-  // private async cachedRoute(key: string, fn: () => Promise<any>) {
-  //   if (this.routeCache.has(key)) return this.routeCache.get(key);
-  //   const data = await fn();
-  //   this.routeCache.set(key, data);
-  //   return data;
-  // }
+  private async cachedRoute(key: string, fn: () => Promise<any>) {
+    if (this.routeCache.has(key)) return this.routeCache.get(key);
+    const data = await fn();
+    this.routeCache.set(key, data);
+    return data;
+  }
 
 }
