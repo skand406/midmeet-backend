@@ -127,6 +127,10 @@ export class CourseGuestDto {
     @IsOptional()
     @IsString()
     place_url?: string;
+    
+    @IsOptional()
+    @IsString()
+    imageUrl?: string;
 }
 
 

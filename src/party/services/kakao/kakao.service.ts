@@ -1,10 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { OtpService } from './otp.service';
+import { OtpService } from '../otp/otp.service';
 import { NotFoundError } from 'rxjs';
-import { CourseService } from './course.service';
-import type { tag as CourseTag } from '../dto/create-course.dto';
+import { CourseService } from '../course/course.service';
+import type { tag as CourseTag } from '../../dto/create-course.dto';
 import * as http from 'http';
 
 @Injectable()

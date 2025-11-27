@@ -6,8 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as turf from '@turf/turf';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ParticipantService } from './participant.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { Party, TransportMode, Participant } from '@prisma/client';
 import {
   Feature,

@@ -1,10 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { Prisma, RoleType } from '@prisma/client';
-import { createParticipantDto } from '../dto/create-participant.dto';
+import { createParticipantDto } from '../../dto/create-participant.dto';
 import { JwtService } from '@nestjs/jwt';
-import { UpdateParticipantDto } from '../dto/update-participant.dto';
-import { MapService } from '../../party/services/map.service';
+import { UpdateParticipantDto } from '../../dto/update-participant.dto';
+import { MapService } from '../map/map.service';
 
 @Injectable()
 export class ParticipantService {

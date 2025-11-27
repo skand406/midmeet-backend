@@ -1,15 +1,17 @@
 
 import { randomUUID } from "crypto";
 import { CourseGuestDto, GuestDto, ParticipantGuestDto, PartyInfoGuestDto } from "../dto/guest.dto";
-import { CourseService } from "./course.service";
-import { KakaoService } from "./kakao.service";
-import { MapService } from "./map.service";
-import { OtpService } from "./otp.service";
-import { ParticipantService } from "./participant.service";
-import { PartyService } from "./party.service";
+import { CourseService } from "./course/course.service";
+import { KakaoService } from "./kakao/kakao.service";
+import { MapService } from "./map/map.service";
+import { OtpService } from "./otp/otp.service";
+import { ParticipantService } from "./participant/participant.service";
+import { PartyService } from "./party/party.service";
 import { Course, Participant, Party, Prisma } from "@prisma/client";
 import { tag } from "../dto/create-course.dto";
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import puppeteer from "puppeteer";
+import { CommonService } from "./common/common.service";
 
 @Injectable()
 export class GuestService {
@@ -17,6 +19,7 @@ export class GuestService {
         private otpService:OtpService,
         private kakaoService:KakaoService,
         private mapService:MapService,
+        private commonSerivce:CommonService
     ) {}
 
     private toPartyModel(dto: PartyInfoGuestDto): Party {
@@ -101,48 +104,124 @@ export class GuestService {
             'AI추천 코스',
         ];
 
-        // 각 추천 유형을 course 단위로 묶기
-        const list = [
-            {
-            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-            courseNo: 1,
-            courseName: convertName[0],
-            places: arr.distance.map((l) => ({
-                placeId: l.course_id,
-                placeName: l.place.place_name,
-                placeAddr: l.place.address_name,
-                place_url: l.place.place_url,
-                lat: Number(l.place.y),
-                lng: Number(l.place.x),
-            })),
-            },
-            {
-            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-            courseNo: 2,
-            courseName: convertName[1],
-            places: arr.accuracy.map((l) => ({
-                placeId: l.course_id,
-                placeName: l.place.place_name,
-                placeAddr: l.place.address_name,
-                place_url: l.place.place_url,
-                lat: Number(l.place.y),
-                lng: Number(l.place.x),
-            })),
-            },
-            {
-            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-            courseNo: 3,
-            courseName: convertName[2],
-            places: arr.diversity.map((l) => ({
-                placeId: l.course_id,
-                placeName: l.place.place_name,
-                placeAddr: l.place.address_name,
-                place_url: l.place.place_url,
-                lat: Number(l.place.y),
-                lng: Number(l.place.x),
-            })),
-            },
+        // // 각 추천 유형을 course 단위로 묶기
+        // const list = [
+        //     {
+        //     courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+        //     courseNo: 1,
+        //     courseName: convertName[0],
+        //     places: arr.distance.map(async (l) => ({
+        //         placeId: l.course_id,
+        //         placeName: l.place.place_name,
+        //         placeAddr: l.place.address_name,
+        //         place_url: l.place.place_url,
+        //         lat: Number(l.place.y),
+        //         lng: Number(l.place.x),
+        //         imageUrl: await this.getPlaceImageUrl(l.place.place_url),
+        //     })),
+        //     },
+        //     {
+        //     courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+        //     courseNo: 2,
+        //     courseName: convertName[1],
+        //     places: arr.accuracy.map(async (l) => ({
+        //         placeId: l.course_id,
+        //         placeName: l.place.place_name,
+        //         placeAddr: l.place.address_name,
+        //         place_url: l.place.place_url,
+        //         lat: Number(l.place.y),
+        //         lng: Number(l.place.x),
+        //         imageUrl: await this.getPlaceImageUrl(l.place.place_url),
+        //     })),
+        //     },
+        //     {
+        //     courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+        //     courseNo: 3,
+        //     courseName: convertName[2],
+        //     places: arr.diversity.map(async (l) => ({
+        //         placeId: l.course_id,
+        //         placeName: l.place.place_name,
+        //         placeAddr: l.place.address_name,
+        //         place_url: l.place.place_url,
+        //         lat: Number(l.place.y),
+        //         lng: Number(l.place.x),
+        //         imageUrl: await this.getPlaceImageUrl(l.place.place_url),   
+        //     })),
+        //     },
+        // ];
+        // 🚨 수정된 부분: Promise.all을 적용하여 모든 이미지 URL 조회가 완료될 때까지 기다림
+        const listPromises = [
+            // 첫 번째 코스 (distance)
+            (async () => {
+                // places 내부의 모든 비동기 작업을 Promise.all로 묶어서 처리
+                const resolvedPlaces = await Promise.all(
+                    arr.distance.map(async (l) => ({
+                        placeId: l.course_id,
+                        placeName: l.place.place_name,
+                        placeAddr: l.place.address_name,
+                        place_url: l.place.place_url,
+                        lat: Number(l.place.y),
+                        lng: Number(l.place.x),
+                        // this.getPlaceImageUrl 호출
+                        imageUrl: await this.commonSerivce.getPlaceImageUrl(l.place.place_url),
+                    })),
+                );
+
+                return {
+                    courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+                    courseNo: 1,
+                    courseName: convertName[0],
+                    places: resolvedPlaces, // 실제 데이터 배열 할당
+                };
+            })(), // 즉시 실행하여 Promise를 listPromises 배열에 추가
+
+            // 두 번째 코스 (accuracy)
+            (async () => {
+                const resolvedPlaces = await Promise.all(
+                    arr.accuracy.map(async (l) => ({
+                        placeId: l.course_id,
+                        placeName: l.place.place_name,
+                        placeAddr: l.place.address_name,
+                        place_url: l.place.place_url,
+                        lat: Number(l.place.y),
+                        lng: Number(l.place.x),
+                        imageUrl: await this.commonSerivce.getPlaceImageUrl(l.place.place_url),
+                    })),
+                );
+
+                return {
+                    courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+                    courseNo: 2,
+                    courseName: convertName[1],
+                    places: resolvedPlaces,
+                };
+            })(),
+
+            // 세 번째 코스 (diversity)
+            (async () => {
+                const resolvedPlaces = await Promise.all(
+                    arr.diversity.map(async (l) => ({
+                        placeId: l.course_id,
+                        placeName: l.place.place_name,
+                        placeAddr: l.place.address_name,
+                        place_url: l.place.place_url,
+                        lat: Number(l.place.y),
+                        lng: Number(l.place.x),
+                        imageUrl: await this.commonSerivce.getPlaceImageUrl(l.place.place_url),
+                    })),
+                );
+
+                return {
+                    courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+                    courseNo: 3,
+                    courseName: convertName[2],
+                    places: resolvedPlaces,
+                };
+            })(),
         ];
+
+        // listPromises 배열에 있는 3개의 큰 비동기 작업이 모두 완료될 때까지 기다림
+        const list = await Promise.all(listPromises);
 
         // 최종 반환 데이터
         const data = {
@@ -197,7 +276,7 @@ export class GuestService {
                 
                 const fastest = route.plan.itineraries.reduce((a, b) => a.duration < b.duration ? a : b );
 
-                const formattedLegs = this.formatLegs(fastest.legs);
+                const formattedLegs = this.commonSerivce.formatLegs(fastest.legs);
                 //console.log(route.plan.itineraries[0].legs);
                 return {
                     name: p.user_uid,
@@ -205,8 +284,10 @@ export class GuestService {
                     transportMode: p.transport_mode,
                     routeDetail: {
                         totalTime: `${hour}시간 ${min % 60}분`,
-                        routeSteps:[ `${route.plan.itineraries[0].transfers}번 환승`
-                                    , ...formattedLegs],
+                        routeSteps:[ 
+                            `${fastest.transfers}번 환승`,
+                             ...formattedLegs
+                            ],
                         startLat: p.start_lat,
                         startLng: p.start_lng,
                     },
@@ -216,7 +297,6 @@ export class GuestService {
         
         // 1-2) 반환
         return {
-            role: '',
             party: {
                 partyName: party.party_name,
                 partyDate: party.date_time,
@@ -232,44 +312,13 @@ export class GuestService {
                     placeAddr: c.place_address,
                     lat: c.place_lat,
                     lng: c.place_lng,
+                    placeUrl: c.place_url,
+                    imageUrl: dto.courses.find(course => course.course_id === c.course_id)?.imageUrl || '',
                 },
                 })),
             },
             member: members,
         }
     }
-    private formatLegs(legs: any[]) {
-        return legs.map((leg, idx) => {
-            const n = idx + 1;
-            const from = leg.from.name;
-            const to = leg.to.name;
-            const dist = Math.round(leg.distance);
-            const min = Math.round(leg.duration / 60);
-
-            // ---- 교통수단 이름 매핑 ----
-            const routeType = leg.routeType;
-            const routeShortName = leg.routeShortName || leg.route || "";
-
-            const modeName = !leg.transitLeg
-            ? "WALK"
-            : routeType === 3
-            ? "BUS"
-            : routeType === 1
-            ? "SUBWAY"
-            : routeType === 0
-            ? "TRAM"
-            : routeType === 2
-            ? "RAIL"
-            : "TRANSIT";
-
-            // ---- WALK ----
-            if (!leg.transitLeg) {
-            return `Leg ${n}: WALK (${from} → ${to})\n거리 ${dist}m\n약 ${min}분`;
-            }
-
-            // ---- TRANSIT ----
-            return `Leg ${n}: ${modeName} ${routeShortName}\n${from} → ${to}`;
-        });
-    }
-
+    
 }    

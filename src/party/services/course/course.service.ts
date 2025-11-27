@@ -4,15 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateCourseArrayDto } from '../dto/create-course.dto';
+import { CreateCourseArrayDto } from '../../dto/create-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   UpdateCourseArrayDto,
   UpdateCourseDto,
-} from '../dto/update-course.dto';
+} from '../../dto/update-course.dto';
 import { instanceToPlain } from 'class-transformer';
-import { ParticipantService } from './participant.service';
-import { MailService } from '../../auth/mail.service';
+import { ParticipantService } from '../participant/participant.service';
+import { MailService } from '../../../auth/mail.service';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
