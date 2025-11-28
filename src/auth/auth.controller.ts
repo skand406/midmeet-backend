@@ -216,9 +216,9 @@ export class AuthController {
       } 
     }
   })
-  async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string, @Res() res: Response) {
+  async verifyReset(@Query('token') token: string, @Body('passwd') passwd: string) {
     await this.authService.verify(token, 'RESET', passwd);
-    return {success:true}//res.redirect(`${process.env.FRONT_URL}/reset-passwd/success`)
+    return { success:true }//res.redirect(`${process.env.FRONT_URL}/reset-passwd/success`)
   }
 
 }
