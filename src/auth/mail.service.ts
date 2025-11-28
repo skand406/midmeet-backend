@@ -110,10 +110,10 @@ export class MailService {
     await this.transporter.sendMail({
       from: `"MidMeet" <${process.env.MAIL_USER}>`,
       to,
-      subject: '모임이 입력을 완성하세요!',
+      subject: '모임이 생성되었습니다. 정보를 입력해주세요.!',
       html: `
         <h2>모임 입력 완료!</h2>
-        <p>모든 참여자가 출발지를 완성했습니다. 링크를 클릭해 모임을 완성해보세요!</p>
+        <p>모든 참여자가 출발지를 입력을 완료했습니다. 링크를 클릭해 중간지점을 찾고 모임을 완성해보세요!</p>
         <a href="${link}">${link}</a>
       `,
     });
