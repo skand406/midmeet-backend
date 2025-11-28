@@ -258,55 +258,96 @@ export class OtpService {
     });
   }
   /* 최종 중간지점 */
+//   async getMidPoint(participants: Participant[], date_time: string, stops: any[]) {
+//     console.log(stops.length);
+//     const results = await Promise.all(
+//       stops.map(async (stop) => {
+        
+//         // 각 참여자 이동 시간
+//         const times = await Promise.all(
+//           participants.map(async (p) => {
+//             const mode = p.transport_mode || 'PUBLIC';
+//             const time = await this.cachedRoute(
+//               `${p.start_lat}-${p.start_lng}-${stop.lat}-${stop.lng}-${mode}-${date_time}`,
+//               () => this.getRoute(
+//                 `${p.start_lat},${p.start_lng}`,
+//                 `${stop.lat},${stop.lng}`,
+//                 mode,
+//                 date_time
+//               )
+//             );
+//             if (!time.plan || !time.plan.itineraries?.length) return Infinity;
+//             return time.plan.itineraries[0].duration;
+//           }),
+//         );
+
+
+//         // 유효 값만 필터
+//         const valid = times.filter((t) => t < Infinity);
+//         // ❗ 모든 참여자가 도달한 경우만 유지
+//         if (valid.length !== participants.length) {
+//           return { ...stop, avg: Infinity, std: Infinity };
+//         }
+
+//         // 평균
+//         const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
+
+//         // 표준편차 계산
+//         const variance =
+//           valid.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / valid.length;
+//         const std = Math.sqrt(variance);
+
+//         return { ...stop, avg, std };
+//       }),
+//     );
+//     console.log('중간지점 후보 계산 완료:', results.map(r => ({id:r.id,avg:r.avg,std:r.std})));
+//     // **표준편차 → 평균 → 순으로 정렬**
+//     return results.sort((a, b) => {
+//       if (a.std === b.std) return a.avg - b.avg;
+//       return a.std - b.std;
+//     })[0];
+// }
   async getMidPoint(participants: Participant[], date_time: string, stops: any[]) {
-    console.log(stops.length);
+    console.log('중간포인트 찾는중');
     const results = await Promise.all(
       stops.map(async (stop) => {
-        
-        // 각 참여자 이동 시간
         const times = await Promise.all(
           participants.map(async (p) => {
-            const mode = p.transport_mode || 'PUBLIC';
-            const time = await this.cachedRoute(
-              `${p.start_lat}-${p.start_lng}-${stop.lat}-${stop.lng}-${mode}-${date_time}`,
-              () => this.getRoute(
-                `${p.start_lat},${p.start_lng}`,
-                `${stop.lat},${stop.lng}`,
-                mode,
-                date_time
-              )
-            );
-            if (!time.plan || !time.plan.itineraries?.length) return Infinity;
-            return time.plan.itineraries[0].duration;
+            try {
+              const mode = p.transport_mode || 'PUBLIC';
+              const time = await this.cachedRoute(
+                `${p.start_lat}-${p.start_lng}-${stop.lat}-${stop.lng}-${mode}-${date_time}`,
+                () =>
+                  this.getRoute(
+                    `${p.start_lat},${p.start_lng}`,
+                    `${stop.lat},${stop.lng}`,
+                    mode,
+                    date_time,
+                  ),
+              );
+              if (!time?.plan?.itineraries?.length) return Infinity;
+              return time.plan.itineraries[0].duration;
+            } catch (err) {
+              // 타임아웃/오류 발생 시 이 정류장은 실패 처리
+              return Infinity;
+            }
           }),
         );
 
-
-        // 유효 값만 필터
         const valid = times.filter((t) => t < Infinity);
-        // ❗ 모든 참여자가 도달한 경우만 유지
         if (valid.length !== participants.length) {
           return { ...stop, avg: Infinity, std: Infinity };
         }
 
-        // 평균
         const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
-
-        // 표준편차 계산
-        const variance =
-          valid.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / valid.length;
+        const variance = valid.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / valid.length;
         const std = Math.sqrt(variance);
-
         return { ...stop, avg, std };
       }),
     );
-    console.log('중간지점 후보 계산 완료:', results.map(r => ({id:r.id,avg:r.avg,std:r.std})));
-    // **표준편차 → 평균 → 순으로 정렬**
-    return results.sort((a, b) => {
-      if (a.std === b.std) return a.avg - b.avg;
-      return a.std - b.std;
-    })[0];
-}
+
+    return results.sort((a, b) => (a.std === b.std ? a.avg - b.avg : a.std - b.std))[0];
+  }
 
 
   private isoCache = new Map<string, any>();
