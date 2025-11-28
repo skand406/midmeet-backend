@@ -80,9 +80,11 @@ export class ParticipantService {
     }
   }
 
-  // findAll() {
-  //   return `This action returns all participant`;
-  // }
+  async findLeader(party_id:string) {
+    return await this.prisma.participant.findFirst({
+      where:{party_id, role:RoleType.LEADER}
+    });
+  }
 
   async findOne(uid: string, party_id: string) {
     return await this.prisma.participant.findUnique({

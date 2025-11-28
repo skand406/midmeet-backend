@@ -776,10 +776,20 @@ export class PartyController {
     );
     const party = await this.partyService.readParty(party_id);
     const count = (await this.participantService.findMany(party_id)).length;
+    if (party?.participant_count === count){
+      const participant = await this.participantService.findLeader(party_id);
+      if (!participant?.user_uid) {
+        // 리더가 없으면 스킵하거나 에러 처리
+        return;
+      }
 
-    if (party?.participant_count === count)
-      await this.mailService.sendMidPointMail(user.email, party_id);
-
+      const leader = await this.userService.findById(participant.user_uid);
+      if (!leader?.email) {
+        // 이메일 없으면 스킵하거나 에러 처리
+        return;
+      }
+      await this.mailService.sendMidPointMail(leader.email, party_id);
+    }
     return participant; // 모임 생성자 파티 참가자 테이블에 추가
   }
 
