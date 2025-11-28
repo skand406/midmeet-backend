@@ -43,7 +43,7 @@ export class KakaoService {
 
       },
     });
-    console.log(url);
+    //console.log(url);
     return res.data.documents;
   }
 
@@ -71,7 +71,7 @@ export class KakaoService {
         size:5
       },
     });
-    console.log(url);
+    //console.log(url);
     return res.data.documents;
   }
   async findCustomCoursePlaces(
@@ -226,23 +226,36 @@ export class KakaoService {
         sortType,
       );
       places.push(...res);
-      if (res.length === 0) {
-        const cat = await this.kakaoCategorySearch(
-          lat,
-          lng,
-          radius,
-          tag.category,
-          sortType,
-        );
-        places.push(...cat);
-      }
     }
-
+    if (places.length === 0) {
+      //console.log('카테고리 검색');
+      const cat = await this.kakaoCategorySearch(
+        lat,
+        lng,
+        radius,
+        tag.category,
+        sortType,
+      );
+      places.push(...cat);
+    }
+    //console.log(places.length);
+    if(places.length === 0) {
+      const cat = await this.kakaoCategorySearch(
+        lat,
+        lng,
+        10000,
+        tag.category,
+        sortType,
+      );
+      places.push(...cat);
+    }
     const unique = Array.from(new Map(places.map((p) => [p.id, p])).values());
-    if (unique.length === 0) throw new Error('검색 결과 없음');
 
+    //console.log('유니크:',unique.length);
     return unique[0]; // 🔥 Top1 반환
   }
+
+
   private async searchAndPickDiversity(
     tag: CourseTag,
     seed: { lat: number; lng: number },
@@ -262,19 +275,19 @@ export class KakaoService {
         'accuracy',
       );
       places.push(...res);
-      console.log(places[0])
-      if (res.length === 0) {
-        const cat = await this.kakaoCategorySearch(
-          lat,
-          lng,
-          radius,
-          tag.category,
-          'accuracy',
-        );
-        places.push(...cat);
-      }
+      //console.log(places[0])
+    
     }
-
+    if (places.length === 0) {
+      const cat = await this.kakaoCategorySearch(
+        lat,
+        lng,
+        radius,
+        tag.category,
+        'accuracy',
+      );
+      places.push(...cat);
+    }
     const unique = Array.from(new Map(places.map((p) => [p.id, p])).values());
     if (unique.length === 0) {
       if (places.length > 0) return places[0];
