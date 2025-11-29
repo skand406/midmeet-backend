@@ -73,64 +73,64 @@ export class OtpService {
   }
 
   /* 참여자 이동시간 중 최댓값 */
-  // private async getMaxDurationTime(
-  //   participants:Participant[],
-  //   center_lat: number,
-  //   center_lng: number,
-  //   date_time: string,
-  // ) {
-  //   const times = await Promise.all(
-  //     participants.map(async (p) => {
-  //       const mode = p.transport_mode||"PUBLIC";
-  //       const result = await this.cachedRoute(
-  //         `${p.start_lat}-${p.start_lng}-${center_lat}-${center_lng}-${mode}-${date_time}`,
-  //         () => this.getRoute(`${p.start_lat},${p.start_lng}`, `${center_lat},${center_lng}`, mode, date_time)
-  //       );
-  //       const duration = Math.min( ...(result?.plan?.itineraries?.map(i => i.duration) ?? [Infinity]));
-
-  //       return duration;
-  //     }));
-  //   return Math.max(...times);
-  // }
-  async getMaxDurationTime(
-    participants: Participant[],
+  private async getMaxDurationTime(
+    participants:Participant[],
     center_lat: number,
     center_lng: number,
     date_time: string,
   ) {
-
-    const durations = await Promise.all(
+    const times = await Promise.all(
       participants.map(async (p) => {
-        try {
-          const mode = p.transport_mode || 'PUBLIC';
+        const mode = p.transport_mode||"PUBLIC";
+        const result = await this.cachedRoute(
+          `${p.start_lat}-${p.start_lng}-${center_lat}-${center_lng}-${mode}-${date_time}`,
+          () => this.getRoute(`${p.start_lat},${p.start_lng}`, `${center_lat},${center_lng}`, mode, date_time)
+        );
+        const duration = Math.min( ...(result?.plan?.itineraries?.map(i => i.duration) ?? [Infinity]));
 
-          const time = await this.cachedRoute(
-            `${p.start_lat}-${p.start_lng}-${center_lat}-${center_lng}-${mode}-${date_time}`,
-            () =>
-              this.getRoute(
-                `${p.start_lat},${p.start_lng}`,
-                `${center_lat},${center_lng}`,
-                mode,
-                date_time,
-              ),
-          );
-
-          if (!time?.plan?.itineraries?.length) return null;
-          return time.plan.itineraries[0].duration;
-        } catch {
-          return null; // 🔥 error → skip
-        }
-      }),
-    );
-
-    const filtered = durations.filter((d) => d !== null);
-
-    if (filtered.length === 0) {
-      return 60 * 60; // 🔥 전원 실패 시 60분(default)
-    }
-
-    return Math.max(...filtered);
+        return duration;
+      }));
+    return Math.max(...times);
   }
+  // async getMaxDurationTime(
+  //   participants: Participant[],
+  //   center_lat: number,
+  //   center_lng: number,
+  //   date_time: string,
+  // ) {
+
+  //   const durations = await Promise.all(
+  //     participants.map(async (p) => {
+  //       try {
+  //         const mode = p.transport_mode || 'PUBLIC';
+
+  //         const time = await this.cachedRoute(
+  //           `${p.start_lat}-${p.start_lng}-${center_lat}-${center_lng}-${mode}-${date_time}`,
+  //           () =>
+  //             this.getRoute(
+  //               `${p.start_lat},${p.start_lng}`,
+  //               `${center_lat},${center_lng}`,
+  //               mode,
+  //               date_time,
+  //             ),
+  //         );
+
+  //         if (!time?.plan?.itineraries?.length) return null;
+  //         return time.plan.itineraries[0].duration;
+  //       } catch {
+  //         return null; // 🔥 error → skip
+  //       }
+  //     }),
+  //   );
+
+  //   const filtered = durations.filter((d) => d !== null);
+
+  //   if (filtered.length === 0) {
+  //     return 60 * 60; // 🔥 전원 실패 시 60분(default)
+  //   }
+
+  //   return Math.max(...filtered);
+  // }
 
   /*OTP 경로 조회*/
   async getRoute(
