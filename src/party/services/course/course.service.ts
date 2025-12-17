@@ -61,6 +61,11 @@ export class CourseService {
     party_id: string,
     updateCourseArrayDto: UpdateCourseArrayDto,
   ) {
+    await this.prisma.course.updateMany({
+      where:{party_id},
+      data:{course_no:{increment:100}},
+    });
+    
     await this.prisma.$transaction(
       updateCourseArrayDto.courses.map((course) =>
         this.prisma.course.update({

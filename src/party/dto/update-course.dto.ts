@@ -78,7 +78,7 @@ export class UpdateCourseDto {
 export class UpdateCourseArrayDto {
   map(
     arg0: (course: any) => {
-      party_id: string;
+      course_id: string;
       course_no: number;
       place_name: any;
       place_address: any;
