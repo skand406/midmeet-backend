@@ -4,6 +4,7 @@ import {
   IsArray,
   IsBoolean,
   IsNumber,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -21,6 +22,7 @@ export class UpdateCourseDto {
     description: '장소 이름(상호명)',
   })
   @IsString()
+  @IsOptional()
   place_name?: string;
 
   @ApiProperty({
@@ -28,6 +30,7 @@ export class UpdateCourseDto {
     description: '장소의 주소(도로명주소)',
   })
   @IsString()
+  @IsOptional()
   place_address?: string;
 
   @ApiProperty({
@@ -42,6 +45,7 @@ export class UpdateCourseDto {
     description: '코스가 보이고 안보이고 상태를 표시[true/false]',
   })
   @IsBoolean()
+  @IsOptional()
   course_view?: boolean;
 
   @ApiProperty({
@@ -49,6 +53,7 @@ export class UpdateCourseDto {
     description: '장소의 위도',
   })
   @IsNumber()
+  @IsOptional()
   @Type(() => Number)
   place_lat?: number;
 
@@ -57,6 +62,7 @@ export class UpdateCourseDto {
     description: '장소의 경도',
   })
   @IsNumber()
+  @IsOptional()
   @Type(() => Number)
   place_lng?: number;
 
@@ -65,6 +71,7 @@ export class UpdateCourseDto {
     description: '장소 상세 URL',
   })
   @IsString()
+  @IsOptional()
   place_url?: string;
 }
 
@@ -86,8 +93,7 @@ export class UpdateCourseArrayDto {
 
   @ApiProperty({
     description: '코스 목록 배열',
-    example: {
-      courses: [
+    example: [
         {
           course_no: 1,
           place_address: '인천 연수구 학나래로6번길 35 1층 신부산갈매기',
@@ -98,7 +104,6 @@ export class UpdateCourseArrayDto {
           place_url: 'http://place.map.kakao.com/12345678', 
         },
       ],
-    },
   })
   @IsArray()
   @ValidateNested({ each: true })

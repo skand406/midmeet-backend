@@ -454,27 +454,27 @@ export class PartyController {
     status: 200,
     description: '',
     schema: {
-      example: [
+      example: {
+
+      courses: [
         {
-          course_id: 'cmgk7skfi0003p5nk51pjk991',
-          party_id: 'cmgk7skam0000p5nkt2iqkr8b',
+          course_id: 'cmglvehl30007vpigz62q4lyi',
+          party_id: 'cmglvehia0004vpigxsdfput4',
           place_name: null,
           place_address: null,
           course_no: 1,
-          tag: '일식, 카페',
+          tag: {
+            category: 'FD6',
+            primaryQueries: ['한식', '일식'],
+            secondaryFilters: ['주차', '단체'],
+          },
           course_view: true,
-        },
-        {
-          course_id: 'cmgk7skfi0004p5nkizu99hmq',
-          party_id: 'cmgk7skam0000p5nkt2iqkr8b',
-          place_name: null,
-          place_address: null,
-          course_no: 2,
-          tag: '한식, 분식, 디저트',
-          course_view: true,
+          place_lat: null,
+          place_lng: null,
+          place_url: null,
         },
       ],
-    },
+    }},
   })
   @ApiResponse({
     status: 401,
