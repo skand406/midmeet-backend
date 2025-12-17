@@ -4,7 +4,7 @@ import { IsBoolean, IsDateString, IsNotEmpty, isNotEmpty, IsNumber, IsOptional, 
 
 export class UpdatePartyDto {
 
-    @IsNotEmpty()
+    @IsOptional()
     @ApiPropertyOptional({ 
         enum: PartyType,
         description: '파티 유형',
