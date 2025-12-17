@@ -1143,6 +1143,7 @@ export class PartyController {
 
   @Get(':party_id')
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
   @ApiOperation({ summary: '모임 정보 조회' })
   @ApiResponse({
     status: 200, 

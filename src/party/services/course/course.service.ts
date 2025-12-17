@@ -68,6 +68,7 @@ export class CourseService {
             course_id: course.course_id,
           },
           data: {
+            course_no: course.course_no,
             place_address: course.place_address,
             place_name: course.place_name,
             place_lat: course.place_lat,
