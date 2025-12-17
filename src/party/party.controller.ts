@@ -1090,7 +1090,7 @@ export class PartyController {
     return data;
   }
 
-
+  //모임에 선정가능한 장소 리스트를 불러오는 기능
   @Get('course_list/:party_id/:course_id')
   async getCourseList(
     @Param('party_id') party_id: string,
@@ -1151,6 +1151,50 @@ export class PartyController {
   async getPartyInfo(@Param('party_id') party_id: string) {    
     return await this.partyService.readParty(party_id); 
   }
+
+  @Get(':party_id/course')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '코스 리스트 불러오기'
+  })
+  @ApiResponse({
+    status:200,
+    description:'코스 리스트',
+    schema:{
+      type:'array',
+      items:{
+        type: 'object',
+        example:{
+          courseNo: 1,
+          courseId: 901,
+          places: {
+            placeId: 901,
+            placeName: '추천 맛집 A',
+            placeAddr: '강남구 역삼동 123-45',
+            lat: 37.4981,
+            lng: 127.0285,
+          },
+        }
+      }
+    },
+  })
+  async getCourseListInfo(@Param('party_id') party_id:string){
+    
+    const course_list = await this.courseService.readCourseList(party_id);
+    return {
+      courses: course_list.map( c => ({
+        courseNo:c.course_no,
+        courseId:c.course_id,
+          places:{
+            placeName:c.place_name,
+            placeAddr:c.place_address,
+            lat:c.place_lat,
+            lng:c.place_lng
+          }
+        }
+      ))}
+    }
 
  // 게스트용
   @Post('/guest')
