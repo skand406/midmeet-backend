@@ -1109,6 +1109,11 @@ export class PartyController {
     required:false,
     description:'위도(선택)'
   })
+  @ApiQuery({
+    name:'lng',
+    required:false,
+    description:'경도(선택)'
+  }) 
   async getCourseList(
     @Param('party_id') party_id: string,
     @Param('course_id') course_id: string,

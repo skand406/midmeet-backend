@@ -28,9 +28,19 @@ export class PartyService {
 
   //모임 설정 변경 - 파티 유형, 파티 상태, 모임 날짜와 시간, 파티 이름
   async updatePartyType(updatePartyDto: UpdatePartyDto, party_id: string) {
+    
+
     return await this.prisma.party.update({
       where: { party_id: party_id },
-      data: { ...updatePartyDto }, //dto로 받은 값들로 업데이트
+      data: {
+        date_time: (updatePartyDto.date_time !== undefined) ? new Date(updatePartyDto.date_time):updatePartyDto.date_time,
+        party_name: updatePartyDto.party_name,
+        party_type:updatePartyDto.party_type,
+        party_state:updatePartyDto.party_state,
+        mid_lat:updatePartyDto.mid_lat,
+        mid_lng:updatePartyDto.mid_lng,
+        mid_place:updatePartyDto.mid_place
+      }, //dto로 받은 값들로 업데이트
     });
   }
 
