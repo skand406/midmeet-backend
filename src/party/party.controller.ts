@@ -1092,6 +1092,23 @@ export class PartyController {
 
   //모임에 선정가능한 장소 리스트를 불러오는 기능
   @Get('course_list/:party_id/:course_id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiParam({
+    name:'party_id',
+    required:true,
+    description:'파티id',
+  })
+  @ApiParam({
+    name:'course_id',
+    required:true,
+    description:'코스id',
+  })
+  @ApiQuery({
+    name:'lat',
+    required:false,
+    description:'위도(선택)'
+  })
   async getCourseList(
     @Param('party_id') party_id: string,
     @Param('course_id') course_id: string,
@@ -1180,7 +1197,7 @@ export class PartyController {
     },
   })
   async getCourseListInfo(@Param('party_id') party_id:string){
-    
+
     const course_list = await this.courseService.readCourseList(party_id);
     return {
       courses: course_list.map( c => ({

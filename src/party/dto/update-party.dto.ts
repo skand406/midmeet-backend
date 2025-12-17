@@ -26,7 +26,7 @@ export class UpdatePartyDto {
         description: '모임 날짜와 시간',
         example: '2025-10-10T14:00:00Z',
     })
-    date_time?: Date;
+    date_time?: string;
 
     @IsOptional()
     @IsString()
