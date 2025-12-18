@@ -26,7 +26,7 @@ import { CommonService } from './services/common/common.service';
     KakaoService,
     GuestService,
     ResultService,
-    CommonService
+    CommonService,
   ],
   exports: [
     ParticipantService, // OtpModule에서 필요한 서비스

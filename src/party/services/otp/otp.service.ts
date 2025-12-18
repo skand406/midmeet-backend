@@ -43,16 +43,17 @@ export class OtpService {
   }
 
   /* 공통 사용 데이터 */
-  private async PartyData(party:Party,participants:Participant[]){//party_id: string) {
+  private async PartyData(party: Party, participants: Participant[]) {
+    //party_id: string) {
     //const party = await this.prismaService.party.findUnique({
     //  where: { party_id },
     //});
     //if (!party) throw new NotFoundException('파티 없음');
-	//
+    //
     //const participants = await this.prismaService.participant.findMany({
     //  where: { party_id },
     //});
-	//	
+    //
     //if (participants.length === 0) throw new NotFoundException('참여자 없음');
 
     const date_time = `${party.date_time}`;
@@ -74,22 +75,31 @@ export class OtpService {
 
   /* 참여자 이동시간 중 최댓값 */
   private async getMaxDurationTime(
-    participants:Participant[],
+    participants: Participant[],
     center_lat: number,
     center_lng: number,
     date_time: string,
   ) {
     const times = await Promise.all(
       participants.map(async (p) => {
-        const mode = p.transport_mode||"PUBLIC";
+        const mode = p.transport_mode || 'PUBLIC';
         const result = await this.cachedRoute(
           `${p.start_lat}-${p.start_lng}-${center_lat}-${center_lng}-${mode}-${date_time}`,
-          () => this.getRoute(`${p.start_lat},${p.start_lng}`, `${center_lat},${center_lng}`, mode, date_time)
+          () =>
+            this.getRoute(
+              `${p.start_lat},${p.start_lng}`,
+              `${center_lat},${center_lng}`,
+              mode,
+              date_time,
+            ),
         );
-        const duration = Math.min( ...(result?.plan?.itineraries?.map(i => i.duration) ?? [Infinity]));
+        const duration = Math.min(
+          ...(result?.plan?.itineraries?.map((i) => i.duration) ?? [Infinity]),
+        );
 
         return duration;
-      }));
+      }),
+    );
     return Math.max(...times);
   }
   // async getMaxDurationTime(
@@ -147,7 +157,7 @@ export class OtpService {
     const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
     const res = await this.httpService.axiosRef.get(link, {
-      timeout: 20000,   // 안전하게 timeout 설정
+      timeout: 20000, // 안전하게 timeout 설정
       httpAgent: agent, // <-- 🔥 핵심
 
       params: {
@@ -192,7 +202,8 @@ export class OtpService {
   }
 
   /* 모든 참여자의 등시선 */
-  async getMidMeet(participants:Participant[],maxTime:number){//party_id: string) {
+  async getMidMeet(participants: Participant[], maxTime: number) {
+    //party_id: string) {
     //const { participants, date_time, center_lat, center_lng, maxTime } =
     //  await this.PartyData(party_id);
 
@@ -201,31 +212,31 @@ export class OtpService {
     console.log('midmeet');
     const iso_list = await Promise.all(
       participants.map(async (p) => {
-        const mode = this.getMode(p.transport_mode || "PUBLIC");
+        const mode = this.getMode(p.transport_mode || 'PUBLIC');
         const key = `${cutoff}-${p.start_lat}-${p.start_lng}-${mode}`;
 
-        return await this.cachedIso(
-          key,
-          () => this.getIsochrone(
+        return await this.cachedIso(key, () =>
+          this.getIsochrone(
             cutoff,
             `${p.start_lat},${p.start_lng}`,
             mode,
-            time
-          )
+            time,
+          ),
         );
-      })
+      }),
     );
 
     return iso_list;
   }
 
   /* 교차 영역 */
-  async getCrossMid(party:Party,participants:Participant[]){//party_id: string) {
-    const data = await this.PartyData(party,participants);
+  async getCrossMid(party: Party, participants: Participant[]) {
+    //party_id: string) {
+    const data = await this.PartyData(party, participants);
     //console.log('교차영역 계산 시작 -', party_id);
     const all_stops = await this.loadSubwayStops();
 
-    const list = await this.getMidMeet(participants,data.maxTime);//party_id);
+    const list = await this.getMidMeet(participants, data.maxTime); //party_id);
     console.log('등시선 로드 완료, 교차영역 계산 중...', list);
     let intersection: Feature<
       Polygon | MultiPolygon,
@@ -249,12 +260,11 @@ export class OtpService {
           turf.centerOfMass(intersection).geometry.coordinates;
         return this.getNearPoint(all_stops, center_lat, center_lng);
       }
-      return await this.getMidPoint(participants, data.date_time, stops);//party_id, stops);
+      return await this.getMidPoint(participants, data.date_time, stops); //party_id, stops);
     }
     console.log('교차영역 없음, 중심점 탐색 중...');
     //const { participants, date_time, center_lat, center_lng, maxTime } =
     //await this.PartyData(party_id);
-
 
     return this.getNearPoint(all_stops, data.center_lat, data.center_lng);
   }
@@ -297,29 +307,32 @@ export class OtpService {
     });
   }
   /* 최종 중간지점 */
-  async getMidPoint(participants: Participant[], date_time: string, stops: any[]) {
+  async getMidPoint(
+    participants: Participant[],
+    date_time: string,
+    stops: any[],
+  ) {
     console.log(stops.length);
     const results = await Promise.all(
       stops.map(async (stop) => {
-        
         // 각 참여자 이동 시간
         const times = await Promise.all(
           participants.map(async (p) => {
             const mode = p.transport_mode || 'PUBLIC';
             const time = await this.cachedRoute(
               `${p.start_lat}-${p.start_lng}-${stop.lat}-${stop.lng}-${mode}-${date_time}`,
-              () => this.getRoute(
-                `${p.start_lat},${p.start_lng}`,
-                `${stop.lat},${stop.lng}`,
-                mode,
-                date_time
-              )
+              () =>
+                this.getRoute(
+                  `${p.start_lat},${p.start_lng}`,
+                  `${stop.lat},${stop.lng}`,
+                  mode,
+                  date_time,
+                ),
             );
             if (!time.plan || !time.plan.itineraries?.length) return Infinity;
             return time.plan.itineraries[0].duration;
           }),
         );
-
 
         // 유효 값만 필터
         const valid = times.filter((t) => t < Infinity);
@@ -333,19 +346,23 @@ export class OtpService {
 
         // 표준편차 계산
         const variance =
-          valid.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / valid.length;
+          valid.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) /
+          valid.length;
         const std = Math.sqrt(variance);
 
         return { ...stop, avg, std };
       }),
     );
-    console.log('중간지점 후보 계산 완료:', results.map(r => ({id:r.id,avg:r.avg,std:r.std})));
+    console.log(
+      '중간지점 후보 계산 완료:',
+      results.map((r) => ({ id: r.id, avg: r.avg, std: r.std })),
+    );
     // **표준편차 → 평균 → 순으로 정렬**
     return results.sort((a, b) => {
       if (a.std === b.std) return a.avg - b.avg;
       return a.std - b.std;
     })[0];
-}
+  }
   //async getMidPoint(participants: Participant[], date_time: string, stops: any[]) {
   //   console.log('중간포인트 찾는중');
   //   const results = await Promise.all(
@@ -388,7 +405,6 @@ export class OtpService {
   //   return results.sort((a, b) => (a.std === b.std ? a.avg - b.avg : a.std - b.std))[0];
   // }
 
-
   private isoCache = new Map<string, any>();
   private routeCache = new Map<string, any>();
   private async cachedIso(key: string, fn: () => Promise<any>) {
@@ -404,5 +420,4 @@ export class OtpService {
     this.routeCache.set(key, data);
     return data;
   }
-
 }

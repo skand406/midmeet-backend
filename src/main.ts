@@ -1,8 +1,7 @@
-
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';     // DTO 유효성 검사를 위한 파이프
+import { ValidationPipe } from '@nestjs/common'; // DTO 유효성 검사를 위한 파이프
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
@@ -26,4 +25,3 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-  

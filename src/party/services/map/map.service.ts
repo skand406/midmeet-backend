@@ -1,15 +1,20 @@
-import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import * as http from 'http';
 
 // ✅ 카카오 REST API 키는 서버 환경 변수에서 가져옵니다.
 
-
 @Injectable()
 export class MapService {
   constructor(private readonly httpService: HttpService) {}
-  private readonly apiUrl = process.env.apiUrl ?? 'https://apis.vworld.kr/new2coord.do';
+  private readonly apiUrl =
+    process.env.apiUrl ?? 'https://apis.vworld.kr/new2coord.do';
   private readonly apiKey = process.env.apiKey;
 
   // async getCoordinates(address: string) {
@@ -30,8 +35,7 @@ export class MapService {
   //     throw err;
   //   }
   // }
-  async getCoordinates(address: string){
-  
+  async getCoordinates(address: string) {
     const url = `${process.env.KAKAO_URL}/address.json`;
     const agent = new http.Agent({ keepAlive: false });
 
@@ -46,8 +50,7 @@ export class MapService {
     });
     console.log(url);
     const lng = res.data.documents[0].address.x;
-    const lat =  res.data.documents[0].address.y;
-    return { lat, lng  };
+    const lat = res.data.documents[0].address.y;
+    return { lat, lng };
   }
 }
-

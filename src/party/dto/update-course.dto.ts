@@ -94,16 +94,16 @@ export class UpdateCourseArrayDto {
   @ApiProperty({
     description: '코스 목록 배열',
     example: [
-        {
-          course_no: 1,
-          place_address: '인천 연수구 학나래로6번길 35 1층 신부산갈매기',
-          place_name: '신부산갈매기',
-          course_view: true,
-          place_lat: 37.450354677762,
-          place_lng: 126.65915614333,
-          place_url: 'http://place.map.kakao.com/12345678', 
-        },
-      ],
+      {
+        course_no: 1,
+        place_address: '인천 연수구 학나래로6번길 35 1층 신부산갈매기',
+        place_name: '신부산갈매기',
+        course_view: true,
+        place_lat: 37.450354677762,
+        place_lng: 126.65915614333,
+        place_url: 'http://place.map.kakao.com/12345678',
+      },
+    ],
   })
   @IsArray()
   @ValidateNested({ each: true })

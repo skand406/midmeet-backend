@@ -14,13 +14,14 @@ export class OtpController {
     private mapService: MapService,
     private httpService: HttpService,
     private guestService: GuestService,
-    private commonService:CommonService
+    private commonService: CommonService,
   ) {}
 
   @Get()
   async otpTest() {
-    
-    return await this.commonService.getPlaceImageUrl('https://place.map.kakao.com/1430592874');
+    return await this.commonService.getPlaceImageUrl(
+      'https://place.map.kakao.com/1430592874',
+    );
     //const link = `${process.env.OTP_URL}/otp/routers/default/plan`;
 
     // const res = await this.httpService.axiosRef.get(link, {

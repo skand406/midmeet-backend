@@ -7,9 +7,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
       // 토큰을 가져오는 방법 정의 (헤더)
-        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-        ignoreExpiration: false,                 // 만료된 토큰 거부
-        secretOrKey: process.env.JWT_SECRET,     // 토큰 서명 검증용 키
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false, // 만료된 토큰 거부
+      secretOrKey: process.env.JWT_SECRET, // 토큰 서명 검증용 키
     });
   }
 

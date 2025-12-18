@@ -28,7 +28,9 @@ export class CourseService {
     party_id: string,
     createCourseArrayDto: CreateCourseArrayDto,
   ) {
-    const party = await this.prisma.party.findUnique({ where: { party_id } });
+    const party = await this.prisma.party.findUnique({
+      where: { party_id },
+    });
     if (!party) {
       throw new HttpException('존재하지 않는 모임입니다.', 405);
     }
@@ -62,10 +64,10 @@ export class CourseService {
     updateCourseArrayDto: UpdateCourseArrayDto,
   ) {
     await this.prisma.course.updateMany({
-      where:{party_id},
-      data:{course_no:{increment:100}},
+      where: { party_id },
+      data: { course_no: { increment: 100 } },
     });
-    
+
     await this.prisma.$transaction(
       updateCourseArrayDto.courses.map((course) =>
         this.prisma.course.update({

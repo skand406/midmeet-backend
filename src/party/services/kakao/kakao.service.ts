@@ -39,8 +39,7 @@ export class KakaoService {
         y: lat,
         radius: radius,
         sort: sort,
-        size:5
-
+        size: 5,
       },
     });
     //console.log(url);
@@ -68,7 +67,7 @@ export class KakaoService {
         y: lat,
         radius: radius,
         sort: sort,
-        size:5
+        size: 5,
       },
     });
     //console.log(url);
@@ -239,7 +238,7 @@ export class KakaoService {
       places.push(...cat);
     }
     //console.log(places.length);
-    if(places.length === 0) {
+    if (places.length === 0) {
       const cat = await this.kakaoCategorySearch(
         lat,
         lng,
@@ -254,7 +253,6 @@ export class KakaoService {
     //console.log('유니크:',unique.length);
     return unique[0]; // 🔥 Top1 반환
   }
-
 
   private async searchAndPickDiversity(
     tag: CourseTag,
@@ -276,7 +274,6 @@ export class KakaoService {
       );
       places.push(...res);
       //console.log(places[0])
-    
     }
     if (places.length === 0) {
       const cat = await this.kakaoCategorySearch(

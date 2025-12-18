@@ -33,10 +33,11 @@ export class ParticipantService {
     user_uid: string,
   ) {
     const code = 'ABCDEFG';
-    
-    const { lat, lng } =
-      await this.mapService.getCoordinates(createParticipantDto.start_address);
-        
+
+    const { lat, lng } = await this.mapService.getCoordinates(
+      createParticipantDto.start_address,
+    );
+
     const participant = await this.prisma.participant.upsert({
       where: { party_id_user_uid: { party_id, user_uid } },
       update: {
@@ -80,9 +81,9 @@ export class ParticipantService {
     }
   }
 
-  async findLeader(party_id:string) {
+  async findLeader(party_id: string) {
     return await this.prisma.participant.findFirst({
-      where:{party_id, role:RoleType.LEADER}
+      where: { party_id, role: RoleType.LEADER },
     });
   }
 
@@ -103,8 +104,9 @@ export class ParticipantService {
     party_id: string,
     updateParticipantDto: UpdateParticipantDto,
   ) {
-    const { lat, lng } =
-      await this.mapService.getCoordinates(updateParticipantDto.start_address);
+    const { lat, lng } = await this.mapService.getCoordinates(
+      updateParticipantDto.start_address,
+    );
 
     return await this.prisma.participant.update({
       where: { party_id_user_uid: { party_id, user_uid: uid } },

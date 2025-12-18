@@ -12,7 +12,7 @@ import { MailService } from './mail.service';
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET,
-        signOptions: { expiresIn: process.env.JWT_EXPIRES},
+        signOptions: { expiresIn: process.env.JWT_EXPIRES },
       }),
     }),
   ],

@@ -1,4 +1,3 @@
-
 import {
   Controller,
   Get,
@@ -67,15 +66,17 @@ export class PartyController {
     private mailService: MailService,
     private guestService: GuestService,
     private resultService: ResultService,
-    private commonService :CommonService
-  ) { }
+    private commonService: CommonService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get(':party_id/invite')
   @HttpCode(HttpStatus.OK)
+  //#region swagger
   @ApiOperation({
     summary: '모임 초대 링크',
     description: '모임 초대 인증용 jwt 토큰 및 인증 기간을 반환',
+    operationId: 'generateInviteToken',
   })
   @ApiBearerAuth()
   @ApiParam({
@@ -92,16 +93,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   generateInviteToken(@Param('party_id') party_id: string) {
     const payload = {
       party_id,
@@ -118,14 +110,16 @@ export class PartyController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post()
+  //#region swagger
   @ApiOperation({
     summary: '모임 생성',
     description:
       'JWT 인증된 사용자가 새로운 모임을 생성합니다. 이메일 인증 완료된 사용자만 가능.',
+    operationId: 'createParty',
   })
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  @Post()
   @ApiBearerAuth()
   @ApiBody({
     type: CreatePartyDto,
@@ -173,16 +167,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async createParty(@Req() req, @Body() createPartyDto: CreatePartyDto) {
     const uid = req.user.uid; // JWT에서 유저 추출
     const user = await this.userService.findById(uid);
@@ -204,7 +189,11 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Patch(':party_id')
-  @ApiOperation({ summary: '모임 내용 수정' })
+  //#region swagger
+  @ApiOperation({
+    summary: '모임 내용 수정',
+    operationId: 'updateParty',
+  })
   @ApiBearerAuth()
   @ApiParam({
     name: 'party_id',
@@ -262,16 +251,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async updateParty(
     @Req() req,
     @Body() updatePartyDto: UpdatePartyDto,
@@ -291,7 +271,11 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post(':party_id/course')
-  @ApiOperation({ summary: '코스 생성' })
+  //#region swagger
+  @ApiOperation({
+    summary: '코스 생성',
+    operationId: 'createCourse',
+  })
   @ApiBearerAuth()
   @ApiParam({
     name: 'party_id',
@@ -360,16 +344,6 @@ export class PartyController {
     },
   })
   @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
-  @ApiResponse({
     status: 405,
     description: '파티가 존재하지 않는 경우',
     schema: {
@@ -410,6 +384,7 @@ export class PartyController {
       },
     },
   })
+  //#endregion
   async createCourse(
     @Req() req,
     @Body() createCourseArrayDto: CreateCourseArrayDto,
@@ -440,9 +415,11 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @Patch(':party_id/courseArray')
   @HttpCode(HttpStatus.OK)
+  //#region swagger
   @ApiOperation({
     summary:
       '코스 수정 : 모임이 ai 타입일때 코스 장소를 배열 형태로 한번에 선택 후 저장',
+    operationId: 'updateCourseArray',
   })
   @ApiBearerAuth()
   @ApiParam({
@@ -455,26 +432,26 @@ export class PartyController {
     description: '',
     schema: {
       example: {
-
-      courses: [
-        {
-          course_id: 'cmglvehl30007vpigz62q4lyi',
-          party_id: 'cmglvehia0004vpigxsdfput4',
-          place_name: null,
-          place_address: null,
-          course_no: 1,
-          tag: {
-            category: 'FD6',
-            primaryQueries: ['한식', '일식'],
-            secondaryFilters: ['주차', '단체'],
+        courses: [
+          {
+            course_id: 'cmglvehl30007vpigz62q4lyi',
+            party_id: 'cmglvehia0004vpigxsdfput4',
+            place_name: null,
+            place_address: null,
+            course_no: 1,
+            tag: {
+              category: 'FD6',
+              primaryQueries: ['한식', '일식'],
+              secondaryFilters: ['주차', '단체'],
+            },
+            course_view: true,
+            place_lat: null,
+            place_lng: null,
+            place_url: null,
           },
-          course_view: true,
-          place_lat: null,
-          place_lng: null,
-          place_url: null,
-        },
-      ],
-    }},
+        ],
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -508,16 +485,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async updateCourseArray(
     @Req() req,
     @Body() updateCourseArrayDto: UpdateCourseArrayDto,
@@ -540,9 +508,12 @@ export class PartyController {
   }
 
   @Patch(':party_id/course/:course_id')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiOperation({
     summary: '코스 수정: 모임이 사용자 지정 타입일 때 각 단일 코스를 수정',
+    operationId: 'updateCourse',
   })
   @ApiBearerAuth()
   @ApiParam({
@@ -612,16 +583,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async updateCourse(
     @Req() req,
     @Body() updateCourseDto: UpdateCourseDto,
@@ -654,7 +616,8 @@ export class PartyController {
   @Delete(':party_id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '모임 삭제' })
+  //#region swagger
+  @ApiOperation({ summary: '모임 삭제', operationId: 'remove' })
   @ApiBearerAuth()
   @ApiParam({
     name: 'party_id',
@@ -692,16 +655,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   remove(@Req() req, @Param('party_id') party_id: string) {
     const uid = req.user.uid;
     return this.partyService.remove(party_id, uid);
@@ -709,9 +663,10 @@ export class PartyController {
 
   @Post(':party_id/participant')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: '참여자 등록' })
   @HttpCode(HttpStatus.OK)
+  //#region swagger
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '참여자 등록', operationId: 'createPaticipant' })
   @ApiParam({
     name: 'party_id',
     required: true,
@@ -751,16 +706,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async createPaticipant(
     @Req() req,
     @Param('party_id') party_id: string,
@@ -776,7 +722,7 @@ export class PartyController {
     );
     const party = await this.partyService.readParty(party_id);
     const count = (await this.participantService.findMany(party_id)).length;
-    if (party?.participant_count === count){
+    if (party?.participant_count === count) {
       const participant = await this.participantService.findLeader(party_id);
       if (!participant?.user_uid) {
         // 리더가 없으면 스킵하거나 에러 처리
@@ -794,9 +740,14 @@ export class PartyController {
   }
 
   @Get(':party_id/waiting')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiBearerAuth()
-  @ApiOperation({ summary: '모임별 등록된 참여자 수 ' })
+  @ApiOperation({
+    summary: '모임별 등록된 참여자 수 ',
+    operationId: 'getParticipantcount',
+  })
   @ApiResponse({
     status: 200,
     description: '전체 모임원 및 등록된 모임원 현황을 알려줌',
@@ -807,16 +758,7 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async getParticipantcount(@Param('party_id') party_id: string) {
     return this.partyService.readParticipantcount(party_id);
   }
@@ -824,7 +766,8 @@ export class PartyController {
   @Get(':party_id/verify-invite')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: '초대 토큰 검증' })
+  //#region swagger
+  @ApiOperation({ summary: '초대 토큰 검증', operationId: 'verifyInvite' })
   @ApiBearerAuth()
   @ApiQuery({
     name: 'token',
@@ -862,44 +805,55 @@ export class PartyController {
       },
     },
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 내부 오류 (DB 문제 등)',
-    schema: {
-      example: {
-        statusCode: 500,
-        error: 'Internal Server Error',
-      },
-    },
-  })
+  //#endregion
   async verifyInvite(
     @Req() req,
     @Param('party_id') party_id: string,
     @Query('token') token: string,
   ) {
     const uid = req.user.uid;
-    const participant = await this.participantService.findOne(uid,party_id);
-    if(participant?.start_address){
+    const participant = await this.participantService.findOne(uid, party_id);
+    if (participant?.start_address) {
       throw new HttpException('이미 참여한 모임입니다.', 406);
     }
     return this.participantService.verifyInviteToken(token, party_id);
   }
 
-  
   @Get(':party_id/result')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiBearerAuth()
+  @ApiOperation({
+    summary: '결과 페이지',
+    description: '결과 페이지에 들어가는 데이터를 구성하는 메소드',
+    operationId: 'findResultPage',
+  })
+  @ApiParam({
+    name: 'party_id',
+    required: true,
+  })
+  //#endregion
   async findResultPage(@Req() req, @Param('party_id') party_id: string) {
     const uid = req.user.uid;
-    return await this.resultService.getResult(party_id,uid);
+    return await this.resultService.getResult(party_id, uid);
   }
-
 
   @Get(':party_id/mid')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiBearerAuth()
+  @ApiOperation({
+    summary: '중간지점 도출 페이지',
+    description: '중간 지점 도출에 사용되는 데이터 반환 메소드',
+    operationId: 'findMidPage',
+  })
+  @ApiParam({
+    name: 'party_id',
+    required: true,
+  })
+  //#endregion
   async findMidPage(@Req() req, @Param('party_id') party_id: string) {
     const uid = req.user.uid;
     const party = await this.partyService.readParty(party_id);
@@ -916,14 +870,17 @@ export class PartyController {
 
     if (!party.mid_place) {
       const participants = await this.participantService.findMany(party_id);
-      midpoint = await this.otpService.getCrossMid(party,participants);
-      await this.partyService.updatePartyType({
-        mid_place: midpoint.name ?? undefined,
-        mid_lat: toNum(midpoint.lat),
-        mid_lng: toNum(midpoint.lng),
-      }, party_id);
+      midpoint = await this.otpService.getCrossMid(party, participants);
+      await this.partyService.updatePartyType(
+        {
+          mid_place: midpoint.name ?? undefined,
+          mid_lat: toNum(midpoint.lat),
+          mid_lng: toNum(midpoint.lng),
+        },
+        party_id,
+      );
     }
-        
+
     let data: any = {};
     let arr: any;
 
@@ -947,70 +904,76 @@ export class PartyController {
       const listPromises = [
         // 첫 번째 코스 (distance)
         (async () => {
-            // places 내부의 모든 비동기 작업을 Promise.all로 묶어서 처리
-            const resolvedPlaces = await Promise.all(
-                arr.distance.map(async (l) => ({
-                    placeId: l.course_id,
-                    placeName: l.place.place_name,
-                    placeAddr: l.place.address_name,
-                    placeUrl: l.place.place_url,
-                    lat: Number(l.place.y),
-                    lng: Number(l.place.x),
-                    // this.getPlaceImageUrl 호출
-                    imageUrl: await this.commonService.getPlaceImageUrl(l.place.place_url),
-                })),
-            );
+          // places 내부의 모든 비동기 작업을 Promise.all로 묶어서 처리
+          const resolvedPlaces = await Promise.all(
+            arr.distance.map(async (l) => ({
+              placeId: l.course_id,
+              placeName: l.place.place_name,
+              placeAddr: l.place.address_name,
+              placeUrl: l.place.place_url,
+              lat: Number(l.place.y),
+              lng: Number(l.place.x),
+              // this.getPlaceImageUrl 호출
+              imageUrl: await this.commonService.getPlaceImageUrl(
+                l.place.place_url,
+              ),
+            })),
+          );
 
-            return {
-                courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-                courseNo: 1,
-                courseName: convertName[0],
-                places: resolvedPlaces, // 실제 데이터 배열 할당
-            };
+          return {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 1,
+            courseName: convertName[0],
+            places: resolvedPlaces, // 실제 데이터 배열 할당
+          };
         })(), // 즉시 실행하여 Promise를 listPromises 배열에 추가
 
         // 두 번째 코스 (accuracy)
         (async () => {
-            const resolvedPlaces = await Promise.all(
-                arr.accuracy.map(async (l) => ({
-                    placeId: l.course_id,
-                    placeName: l.place.place_name,
-                    placeAddr: l.place.address_name,
-                    placeUrl: l.place.place_url,
-                    lat: Number(l.place.y),
-                    lng: Number(l.place.x),
-                    imageUrl: await this.commonService.getPlaceImageUrl(l.place.place_url),
-                })),
-            );
+          const resolvedPlaces = await Promise.all(
+            arr.accuracy.map(async (l) => ({
+              placeId: l.course_id,
+              placeName: l.place.place_name,
+              placeAddr: l.place.address_name,
+              placeUrl: l.place.place_url,
+              lat: Number(l.place.y),
+              lng: Number(l.place.x),
+              imageUrl: await this.commonService.getPlaceImageUrl(
+                l.place.place_url,
+              ),
+            })),
+          );
 
-            return {
-                courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-                courseNo: 2,
-                courseName: convertName[1],
-                places: resolvedPlaces,
-            };
+          return {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 2,
+            courseName: convertName[1],
+            places: resolvedPlaces,
+          };
         })(),
 
         // 세 번째 코스 (diversity)
         (async () => {
-            const resolvedPlaces = await Promise.all(
-                arr.diversity.map(async (l) => ({
-                    placeId: l.course_id,
-                    placeName: l.place.place_name,
-                    placeAddr: l.place.address_name,
-                    placeUrl: l.place.place_url,
-                    lat: Number(l.place.y),
-                    lng: Number(l.place.x),
-                    imageUrl: await this.commonService.getPlaceImageUrl(l.place.place_url),
-                })),
-            );
+          const resolvedPlaces = await Promise.all(
+            arr.diversity.map(async (l) => ({
+              placeId: l.course_id,
+              placeName: l.place.place_name,
+              placeAddr: l.place.address_name,
+              placeUrl: l.place.place_url,
+              lat: Number(l.place.y),
+              lng: Number(l.place.x),
+              imageUrl: await this.commonService.getPlaceImageUrl(
+                l.place.place_url,
+              ),
+            })),
+          );
 
-            return {
-                courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-                courseNo: 3,
-                courseName: convertName[2],
-                places: resolvedPlaces,
-            };
+          return {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 3,
+            courseName: convertName[2],
+            places: resolvedPlaces,
+          };
         })(),
       ];
 
@@ -1040,7 +1003,7 @@ export class PartyController {
             },
           })),
         },
-        list,  // ⬅ 배열 형태로 반환됨
+        list, // ⬅ 배열 형태로 반환됨
       };
 
       return data;
@@ -1076,15 +1039,17 @@ export class PartyController {
           },
         })),
       },
-      list: await Promise.all(arr.map(async (l) => ({
-        placeId: l.id,
-        placeName: l.place_name,
-        placeAddr: l.address_name,
-        placeUrl: l.place_url,
-        imageUrl: await this.commonService.getPlaceImageUrl(l.place_url),
-        lat: l.y,
-        lng: l.x,
-      })))
+      list: await Promise.all(
+        arr.map(async (l) => ({
+          placeId: l.id,
+          placeName: l.place_name,
+          placeAddr: l.address_name,
+          placeUrl: l.place_url,
+          imageUrl: await this.commonService.getPlaceImageUrl(l.place_url),
+          lat: l.y,
+          lng: l.x,
+        })),
+      ),
     };
 
     return data;
@@ -1093,27 +1058,35 @@ export class PartyController {
   //모임에 선정가능한 장소 리스트를 불러오는 기능
   @Get('course_list/:party_id/:course_id')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiBearerAuth()
-  @ApiParam({
-    name:'party_id',
-    required:true,
-    description:'파티id',
+  @ApiOperation({
+    summary: '모임 장소 선택 리스트',
+    description: '모임 장소 선정 시 필요한 장소 리스트 제공',
+    operationId: 'getCourseList',
   })
   @ApiParam({
-    name:'course_id',
-    required:true,
-    description:'코스id',
+    name: 'party_id',
+    required: true,
+    description: '파티id',
+  })
+  @ApiParam({
+    name: 'course_id',
+    required: true,
+    description: '코스id',
   })
   @ApiQuery({
-    name:'lat',
-    required:false,
-    description:'위도(선택)'
+    name: 'lat',
+    required: false,
+    description: '위도(선택)',
   })
   @ApiQuery({
-    name:'lng',
-    required:false,
-    description:'경도(선택)'
-  }) 
+    name: 'lng',
+    required: false,
+    description: '경도(선택)',
+  })
+  //#endregion
   async getCourseList(
     @Param('party_id') party_id: string,
     @Param('course_id') course_id: string,
@@ -1128,67 +1101,64 @@ export class PartyController {
       lng,
     );
     return {
-      list: await Promise.all(list.map(async (l) => ({
-        placeId: l.id,
-        placeName: l.place_name,
-        placeAddr: l.address_name,
-        lat: l.y,
-        lng: l.x,
-        placeUrl: l.place_url,
-        imageUrl: await this.commonService.getPlaceImageUrl(l.place_url),
-      }))),
+      list: await Promise.all(
+        list.map(async (l) => ({
+          placeId: l.id,
+          placeName: l.place_name,
+          placeAddr: l.address_name,
+          lat: l.y,
+          lng: l.x,
+          placeUrl: l.place_url,
+          imageUrl: await this.commonService.getPlaceImageUrl(l.place_url),
+        })),
+      ),
     };
   }
 
-
   @Get(':party_id')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiBearerAuth()
   @ApiOperation({ summary: '모임 정보 조회' })
   @ApiResponse({
-    status: 200, 
+    status: 200,
     description: '모임 정보 조회 성공',
     schema: {
-      example: { 
+      example: {
         party_id: 'cmgtao6uo0004vp3kd1s7b3x7',
         party_name: '주말 회식 모임',
-        party_type: 'AI_COURSE',  
+        party_type: 'AI_COURSE',
         date_time: '2024-08-15T18:30:00.000Z',
         participant_count: 5,
         mid_place: '중앙공원',
         mid_lat: 37.123456,
-        mid_lng: 127.123456
-      },  
+        mid_lng: 127.123456,
+      },
     },
   })
-  @ApiResponse({    
-    status: 500,  
-    description: '서버 내부 오류 (DB 문제 등)',    
-    schema: {      
-      example: {        
-        statusCode: 500,        
-        error: 'Internal Server Error',      
-      },    
-    },  
-  })  
-  async getPartyInfo(@Param('party_id') party_id: string) {    
-    return await this.partyService.readParty(party_id); 
+  //#endregion
+  async getPartyInfo(@Param('party_id') party_id: string) {
+    return await this.partyService.readParty(party_id);
   }
 
   @Get(':party_id/course')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '코스 리스트 불러오기'
+    summary: '코스 리스트 불러오기',
+    operationId: 'getCourseListInfo',
   })
   @ApiResponse({
-    status:200,
-    description:'코스 리스트',
-    schema:{
-      type:'array',
-      items:{
+    status: 200,
+    description: '코스 리스트',
+    schema: {
+      type: 'array',
+      items: {
         type: 'object',
-        example:{
+        example: {
           courseNo: 1,
           courseId: 901,
           places: {
@@ -1198,146 +1168,154 @@ export class PartyController {
             lat: 37.4981,
             lng: 127.0285,
           },
-        }
-      }
+        },
+      },
     },
   })
-  async getCourseListInfo(@Param('party_id') party_id:string){
-
+  //#endregion
+  async getCourseListInfo(@Param('party_id') party_id: string) {
     const course_list = await this.courseService.readCourseList(party_id);
     return {
-      courses: course_list.map( c => ({
-        courseNo:c.course_no,
-        courseId:c.course_id,
-          places:{
-            placeName:c.place_name,
-            placeAddr:c.place_address,
-            lat:c.place_lat,
-            lng:c.place_lng
-          }
-        }
-      ))}
-    }
+      courses: course_list.map((c) => ({
+        courseNo: c.course_no,
+        courseId: c.course_id,
+        places: {
+          placeName: c.place_name,
+          placeAddr: c.place_address,
+          lat: c.place_lat,
+          lng: c.place_lng,
+        },
+      })),
+    };
+  }
 
- // 게스트용
+  // 게스트용
   @Post('/guest')
   @HttpCode(HttpStatus.OK)
+  //#region swagger
   @ApiOperation({ summary: '게스트 모임 생성' })
-  @ApiBody({ type: GuestDto, description: '게스트 모임 생성에 필요한 정보(토큰 필요없음)' })
+  @ApiBody({
+    type: GuestDto,
+    description: '게스트 모임 생성에 필요한 정보(토큰 필요없음)',
+  })
   @ApiResponse({
     status: 200,
     description: '게스트 모임 생성 성공',
     schema: {
       example: {
-      "statusCode": 200,
-      "data": {
-          "party": {
-              "partyName": "정윤초현",
-              "partyDate": "2025-11-27T17:30:00",
-              "midPoint": "달월",
-              "midPointLat": 37.37968,
-              "midPointLng": 126.74518,
-              "partyType": "AI_COURSE",
-              "courses": [
-                  {
-                      "courseNo": 1,
-                      "courseId": "1764057612380",
-                      "places": {
-                          "placeId": "",
-                          "placeName": "",
-                          "placeAddr": "",
-                          "lat": 0,
-                          "lng": 0
-                      }
-                  },
-                  {
-                      "courseNo": 2,
-                      "courseId": "1764057645831",
-                      "places": {
-                          "placeId": "",
-                          "placeName": "",
-                          "placeAddr": "",
-                          "lat": 0,
-                          "lng": 0
-                      }
-                  }
-              ]
+        statusCode: 200,
+        data: {
+          party: {
+            partyName: '정윤초현',
+            partyDate: '2025-11-27T17:30:00',
+            midPoint: '달월',
+            midPointLat: 37.37968,
+            midPointLng: 126.74518,
+            partyType: 'AI_COURSE',
+            courses: [
+              {
+                courseNo: 1,
+                courseId: '1764057612380',
+                places: {
+                  placeId: '',
+                  placeName: '',
+                  placeAddr: '',
+                  lat: 0,
+                  lng: 0,
+                },
+              },
+              {
+                courseNo: 2,
+                courseId: '1764057645831',
+                places: {
+                  placeId: '',
+                  placeName: '',
+                  placeAddr: '',
+                  lat: 0,
+                  lng: 0,
+                },
+              },
+            ],
           },
-          "list": [
-              {
-                  "courseId": "241040",
-                  "courseNo": 1,
-                  "courseName": "거리우선 추천코스",
-                  "places": [
-                      {
-                          "placeId": "1764057612380",
-                          "placeName": "평이담백 뼈칼국수 신세계아울렛시흥프리미엄",
-                          "placeAddr": "경기 시흥시 배곧동 36",
-                          "lat": 37.3797942465734,
-                          "lng": 126.73835989687
-                      },
-                      {
-                          "placeId": "1764057645831",
-                          "placeName": "소바공방 신세계아울렛시흥프리미엄",
-                          "placeAddr": "경기 시흥시 배곧동 36",
-                          "lat": 37.379701214667634,
-                          "lng": 126.7382574734017
-                      }
-                  ]
-              },
-              {
-                  "courseId": "597064",
-                  "courseNo": 2,
-                  "courseName": "인기우선 추천코스",
-                  "places": [
-                      {
-                          "placeId": "1764057612380",
-                          "placeName": "만석씨푸드 본점",
-                          "placeAddr": "경기 시흥시 배곧동 18-7",
-                          "lat": 37.3823736934317,
-                          "lng": 126.735847666764
-                      },
-                      {
-                          "placeId": "1764057645831",
-                          "placeName": "히바린 신세계아울렛시흥프리미엄",
-                          "placeAddr": "경기 시흥시 배곧동 36",
-                          "lat": 37.37991044534868,
-                          "lng": 126.73591276097015
-                      }
-                  ]
-              },
-              {
-                  "courseId": "217073",
-                  "courseNo": 3,
-                  "courseName": "AI추천 코스",
-                  "places": [
-                      {
-                          "placeId": "1764057612380",
-                          "placeName": "정든한우 소머리국밥 배곧신도시점",
-                          "placeAddr": "경기 시흥시 배곧동 18-4",
-                          "lat": 37.382261905478764,
-                          "lng": 126.73501476645305
-                      },
-                      {
-                          "placeId": "1764057645831",
-                          "placeName": "사보텐 신세계배곧점",
-                          "placeAddr": "경기 시흥시 배곧동 36",
-                          "lat": 37.37990079861863,
-                          "lng": 126.73846453181277
-                      }
-                  ]
-              }
-          ]
+          list: [
+            {
+              courseId: '241040',
+              courseNo: 1,
+              courseName: '거리우선 추천코스',
+              places: [
+                {
+                  placeId: '1764057612380',
+                  placeName: '평이담백 뼈칼국수 신세계아울렛시흥프리미엄',
+                  placeAddr: '경기 시흥시 배곧동 36',
+                  lat: 37.3797942465734,
+                  lng: 126.73835989687,
+                },
+                {
+                  placeId: '1764057645831',
+                  placeName: '소바공방 신세계아울렛시흥프리미엄',
+                  placeAddr: '경기 시흥시 배곧동 36',
+                  lat: 37.379701214667634,
+                  lng: 126.7382574734017,
+                },
+              ],
+            },
+            {
+              courseId: '597064',
+              courseNo: 2,
+              courseName: '인기우선 추천코스',
+              places: [
+                {
+                  placeId: '1764057612380',
+                  placeName: '만석씨푸드 본점',
+                  placeAddr: '경기 시흥시 배곧동 18-7',
+                  lat: 37.3823736934317,
+                  lng: 126.735847666764,
+                },
+                {
+                  placeId: '1764057645831',
+                  placeName: '히바린 신세계아울렛시흥프리미엄',
+                  placeAddr: '경기 시흥시 배곧동 36',
+                  lat: 37.37991044534868,
+                  lng: 126.73591276097015,
+                },
+              ],
+            },
+            {
+              courseId: '217073',
+              courseNo: 3,
+              courseName: 'AI추천 코스',
+              places: [
+                {
+                  placeId: '1764057612380',
+                  placeName: '정든한우 소머리국밥 배곧신도시점',
+                  placeAddr: '경기 시흥시 배곧동 18-4',
+                  lat: 37.382261905478764,
+                  lng: 126.73501476645305,
+                },
+                {
+                  placeId: '1764057645831',
+                  placeName: '사보텐 신세계배곧점',
+                  placeAddr: '경기 시흥시 배곧동 36',
+                  lat: 37.37990079861863,
+                  lng: 126.73846453181277,
+                },
+              ],
+            },
+          ],
         },
       },
     },
   })
+  //#endregion
   async guestParty(@Body() dto: GuestDto) {
     return await this.guestService.guestParty(dto);
   }
 
   @Post('/guest/result')
   @HttpCode(HttpStatus.OK)
+  //#region swagger
+
+  //#endregion
   async guestResult(@Body() dto: GuestDto) {
     return await this.guestService.guestResult(dto);
   }

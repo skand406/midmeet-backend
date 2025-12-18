@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
@@ -9,9 +16,9 @@ import { MailService } from 'src/auth/mail.service';
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService, 
+    private prisma: PrismaService,
     private jwt: JwtService,
-    private mail: MailService
+    private mail: MailService,
   ) {}
 
   //jwt 토큰 발급
@@ -25,17 +32,17 @@ export class AuthService {
       const user = await this.prisma.user.create({
         data: {
           email: dto.email,
-          passwd : passwordHash,
+          passwd: passwordHash,
           name: dto.name,
           phone: dto.phone,
-          id : dto.id,
+          id: dto.id,
         },
-        select: { 
-          uid: true, 
-          id: true, 
-          email: true, 
-          name: true, 
-          phone: true, 
+        select: {
+          uid: true,
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
         },
       });
 
@@ -49,7 +56,9 @@ export class AuthService {
       // Prisma unique constraint 위반 → 409 Conflict
       if (e?.code === 'P2002') {
         const target = e.meta?.target;
-        const fields = Array.isArray(target) ? target.join(', ') : String(target);
+        const fields = Array.isArray(target)
+          ? target.join(', ')
+          : String(target);
         throw new ConflictException(`${fields} already in use`); // 409
       }
 
@@ -80,7 +89,9 @@ export class AuthService {
   //로그인
   async login(dto: LoginDto) {
     try {
-      const user = await this.prisma.user.findUnique({ where: { id: dto.id } });
+      const user = await this.prisma.user.findUnique({
+        where: { id: dto.id },
+      });
       if (!user) throw new UnauthorizedException('id-Invalid credentials');
 
       const ok = await bcrypt.compare(dto.passwd, user.passwd);
@@ -88,8 +99,7 @@ export class AuthService {
 
       const token = await this.sign({ uid: user.uid, id: user.id });
       const { passwd, ...safeUser } = user; // 비밀번호 제거
-      return { token, user:safeUser };
-
+      return { token, user: safeUser };
     } catch (e) {
       // 이미 우리가 의도적으로 던진 UnauthorizedException은 그대로 전달
       if (e instanceof UnauthorizedException) {

@@ -1,2 +1,7 @@
 {
+    "editor.foldingStrategy": "auto",
+    "foldOnOpen.targets": ["AllMarkerRegions"],
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+
 }
