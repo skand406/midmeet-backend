@@ -853,7 +853,7 @@ export class PartyController {
   //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '중간지점 도출 페이지[findMidPage]',
+    summary: '중간지점 도출 페이지',
     description: '중간 지점 도출에 사용되는 데이터 반환 메소드',
     operationId: 'findMidPage',
   })
@@ -868,19 +868,199 @@ export class PartyController {
     const course_list = await this.courseService.readCourseList(party_id);
     if (!party || !course_list) throw new NotFoundException('모임이 없습니다.');
 
+    const toNum = (v: any) => Number(v ?? 0);
+
+    let midpoint = {
+      name: party.mid_place ?? '',
+      lat: toNum(party.mid_lat),
+      lng: toNum(party.mid_lng),
+    };
+
     if (!party.mid_place) {
       const participants = await this.participantService.findMany(party_id);
-      const midpoint = await this.otpService.getCrossMid(party, participants);
+      midpoint = await this.otpService.getCrossMid(party, participants);
       await this.partyService.updatePartyType(
         {
           mid_place: midpoint.name ?? undefined,
-          mid_lat: midpoint.lat,
-          mid_lng: midpoint.lng,
+          mid_lat: toNum(midpoint.lat),
+          mid_lng: toNum(midpoint.lng),
         },
         party_id,
       );
     }
-    return await this.resultService.getMid(party_id);
+
+    let data: any = {};
+    let arr: any;
+
+    /* ---------------------------------------------------
+        AI_COURSE
+    --------------------------------------------------- */
+    if (party.party_type === 'AI_COURSE') {
+      arr = await this.kakaoService.findAICoursePlaces(
+        course_list,
+        midpoint.lat,
+        midpoint.lng,
+      );
+
+      const convertName = [
+        '거리우선 추천코스',
+        '인기우선 추천코스',
+        'AI추천 코스',
+      ];
+
+      // 각 추천 유형을 course 단위로 묶기
+      const listPromises = [
+        // 첫 번째 코스 (distance)
+        (async () => {
+          // places 내부의 모든 비동기 작업을 Promise.all로 묶어서 처리
+          const resolvedPlaces = await Promise.all(
+            arr.distance.map(async (l) => ({
+              placeId: l.course_id,
+              placeName: l.place.place_name,
+              placeAddr: l.place.address_name,
+              placeUrl: l.place.place_url,
+              lat: Number(l.place.y),
+              lng: Number(l.place.x),
+              // this.getPlaceImageUrl 호출
+              imageUrl: await this.commonService.getPlaceImageUrl(
+                l.place.place_url,
+              ),
+            })),
+          );
+
+          return {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 1,
+            courseName: convertName[0],
+            places: resolvedPlaces, // 실제 데이터 배열 할당
+          };
+        })(), // 즉시 실행하여 Promise를 listPromises 배열에 추가
+
+        // 두 번째 코스 (accuracy)
+        (async () => {
+          const resolvedPlaces = await Promise.all(
+            arr.accuracy.map(async (l) => ({
+              placeId: l.course_id,
+              placeName: l.place.place_name,
+              placeAddr: l.place.address_name,
+              placeUrl: l.place.place_url,
+              lat: Number(l.place.y),
+              lng: Number(l.place.x),
+              imageUrl: await this.commonService.getPlaceImageUrl(
+                l.place.place_url,
+              ),
+            })),
+          );
+
+          return {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 2,
+            courseName: convertName[1],
+            places: resolvedPlaces,
+          };
+        })(),
+
+        // 세 번째 코스 (diversity)
+        (async () => {
+          const resolvedPlaces = await Promise.all(
+            arr.diversity.map(async (l) => ({
+              placeId: l.course_id,
+              placeName: l.place.place_name,
+              placeAddr: l.place.address_name,
+              placeUrl: l.place.place_url,
+              lat: Number(l.place.y),
+              lng: Number(l.place.x),
+              imageUrl: await this.commonService.getPlaceImageUrl(
+                l.place.place_url,
+              ),
+            })),
+          );
+
+          return {
+            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
+            courseNo: 3,
+            courseName: convertName[2],
+            places: resolvedPlaces,
+          };
+        })(),
+      ];
+
+      // listPromises 배열에 있는 3개의 큰 비동기 작업이 모두 완료될 때까지 기다림
+      const list = await Promise.all(listPromises);
+
+      // 최종 반환 데이터
+      data = {
+        party: {
+          partyName: party.party_name,
+          partyDate: party.date_time,
+          midPoint: midpoint.name,
+          midPointLat: midpoint.lat,
+          midPointLng: midpoint.lng,
+          partyType: party.party_type,
+          courses: course_list.map((c) => ({
+            courseNo: c.course_no,
+            courseId: c.course_id,
+            places: {
+              placeId: '',
+              placeName: c.place_name ?? '',
+              placeAddr: c.place_address ?? '',
+              lat: c.place_lat ?? 0,
+              lng: c.place_lng ?? 0,
+              placeUrl: c.place_url ?? '',
+              imageUrl: '',
+            },
+          })),
+        },
+        list, // ⬅ 배열 형태로 반환됨
+      };
+
+      return data;
+    }
+
+    /* ---------------------------------------------------
+        CUSTOM_COURSE
+    --------------------------------------------------- */
+    arr = await this.kakaoService.findCustomCoursePlaces(
+      party_id,
+      course_list[0].course_id,
+      midpoint.lat,
+      midpoint.lng,
+    );
+
+    data = {
+      party: {
+        partyName: party.party_name,
+        partyDate: party.date_time,
+        midPoint: midpoint.name,
+        midPointLat: midpoint.lat,
+        midPointLng: midpoint.lng,
+        partyType: party.party_type,
+        courses: course_list.map((c) => ({
+          courseNo: c.course_no,
+          courseId: c.course_id,
+          places: {
+            placeId: '',
+            placeName: c.place_name ?? '',
+            placeAddr: c.place_address ?? '',
+            lat: c.place_lat ?? 0,
+            lng: c.place_lng ?? 0,
+          },
+        })),
+      },
+      list: await Promise.all(
+        arr.map(async (l) => ({
+          placeId: l.id,
+          placeName: l.place_name,
+          placeAddr: l.address_name,
+          placeUrl: l.place_url,
+          imageUrl: await this.commonService.getPlaceImageUrl(l.place_url),
+          lat: l.y,
+          lng: l.x,
+        })),
+      ),
+    };
+
+    return data;
   }
 
   //모임에 선정가능한 장소 리스트를 불러오는 기능
