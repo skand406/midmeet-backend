@@ -51,6 +51,7 @@ import { GuestService } from './services/guest.service';
 import { GuestDto } from './dto/guest.dto';
 import { ResultService } from './services/result/result.service';
 import { CommonService } from './services/common/common.service';
+import { CourseResponseDto } from './dto/course-response.dto';
 
 @ApiTags('party')
 @Controller('party')
@@ -74,7 +75,7 @@ export class PartyController {
   @HttpCode(HttpStatus.OK)
   //#region swagger
   @ApiOperation({
-    summary: '모임 초대 링크',
+    summary: '모임 초대 링크[generateInviteToken]',
     description: '모임 초대 인증용 jwt 토큰 및 인증 기간을 반환',
     operationId: 'generateInviteToken',
   })
@@ -115,7 +116,7 @@ export class PartyController {
   @Post()
   //#region swagger
   @ApiOperation({
-    summary: '모임 생성',
+    summary: '모임 생성[createParty]',
     description:
       'JWT 인증된 사용자가 새로운 모임을 생성합니다. 이메일 인증 완료된 사용자만 가능.',
     operationId: 'createParty',
@@ -191,7 +192,7 @@ export class PartyController {
   @Patch(':party_id')
   //#region swagger
   @ApiOperation({
-    summary: '모임 내용 수정',
+    summary: '모임 내용 수정[updateParty]',
     operationId: 'updateParty',
   })
   @ApiBearerAuth()
@@ -273,7 +274,7 @@ export class PartyController {
   @Post(':party_id/course')
   //#region swagger
   @ApiOperation({
-    summary: '코스 생성',
+    summary: '코스 생성[createCourse]',
     operationId: 'createCourse',
   })
   @ApiBearerAuth()
@@ -418,7 +419,7 @@ export class PartyController {
   //#region swagger
   @ApiOperation({
     summary:
-      '코스 수정 : 모임이 ai 타입일때 코스 장소를 배열 형태로 한번에 선택 후 저장',
+      '[updateCourseArray]코스 수정 : 모임이 ai 타입일때 코스 장소를 배열 형태로 한번에 선택 후 저장',
     operationId: 'updateCourseArray',
   })
   @ApiBearerAuth()
@@ -512,7 +513,8 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   //#region swagger
   @ApiOperation({
-    summary: '코스 수정: 모임이 사용자 지정 타입일 때 각 단일 코스를 수정',
+    summary:
+      '[updateCourse]코스 수정: 모임이 사용자 지정 타입일 때 각 단일 코스를 수정',
     operationId: 'updateCourse',
   })
   @ApiBearerAuth()
@@ -617,7 +619,7 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   //#region swagger
-  @ApiOperation({ summary: '모임 삭제', operationId: 'remove' })
+  @ApiOperation({ summary: '모임 삭제[remove]', operationId: 'remove' })
   @ApiBearerAuth()
   @ApiParam({
     name: 'party_id',
@@ -666,7 +668,10 @@ export class PartyController {
   @HttpCode(HttpStatus.OK)
   //#region swagger
   @ApiBearerAuth()
-  @ApiOperation({ summary: '참여자 등록', operationId: 'createPaticipant' })
+  @ApiOperation({
+    summary: '참여자 등록[createPaticipant]',
+    operationId: 'createPaticipant',
+  })
   @ApiParam({
     name: 'party_id',
     required: true,
@@ -745,7 +750,7 @@ export class PartyController {
   //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '모임별 등록된 참여자 수 ',
+    summary: '모임별 등록된 참여자 수[getParticipantcount] ',
     operationId: 'getParticipantcount',
   })
   @ApiResponse({
@@ -767,7 +772,10 @@ export class PartyController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   //#region swagger
-  @ApiOperation({ summary: '초대 토큰 검증', operationId: 'verifyInvite' })
+  @ApiOperation({
+    summary: '초대 토큰 검증[verifyInvite]',
+    operationId: 'verifyInvite',
+  })
   @ApiBearerAuth()
   @ApiQuery({
     name: 'token',
@@ -825,7 +833,7 @@ export class PartyController {
   //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '결과 페이지',
+    summary: '결과 페이지[findResultPage]',
     description: '결과 페이지에 들어가는 데이터를 구성하는 메소드',
     operationId: 'findResultPage',
   })
@@ -845,7 +853,7 @@ export class PartyController {
   //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '중간지점 도출 페이지',
+    summary: '중간지점 도출 페이지[findMidPage]',
     description: '중간 지점 도출에 사용되는 데이터 반환 메소드',
     operationId: 'findMidPage',
   })
@@ -860,199 +868,19 @@ export class PartyController {
     const course_list = await this.courseService.readCourseList(party_id);
     if (!party || !course_list) throw new NotFoundException('모임이 없습니다.');
 
-    const toNum = (v: any) => Number(v ?? 0);
-
-    let midpoint = {
-      name: party.mid_place ?? '',
-      lat: toNum(party.mid_lat),
-      lng: toNum(party.mid_lng),
-    };
-
     if (!party.mid_place) {
       const participants = await this.participantService.findMany(party_id);
-      midpoint = await this.otpService.getCrossMid(party, participants);
+      const midpoint = await this.otpService.getCrossMid(party, participants);
       await this.partyService.updatePartyType(
         {
           mid_place: midpoint.name ?? undefined,
-          mid_lat: toNum(midpoint.lat),
-          mid_lng: toNum(midpoint.lng),
+          mid_lat: midpoint.lat,
+          mid_lng: midpoint.lng,
         },
         party_id,
       );
     }
-
-    let data: any = {};
-    let arr: any;
-
-    /* ---------------------------------------------------
-        AI_COURSE
-    --------------------------------------------------- */
-    if (party.party_type === 'AI_COURSE') {
-      arr = await this.kakaoService.findAICoursePlaces(
-        course_list,
-        midpoint.lat,
-        midpoint.lng,
-      );
-
-      const convertName = [
-        '거리우선 추천코스',
-        '인기우선 추천코스',
-        'AI추천 코스',
-      ];
-
-      // 각 추천 유형을 course 단위로 묶기
-      const listPromises = [
-        // 첫 번째 코스 (distance)
-        (async () => {
-          // places 내부의 모든 비동기 작업을 Promise.all로 묶어서 처리
-          const resolvedPlaces = await Promise.all(
-            arr.distance.map(async (l) => ({
-              placeId: l.course_id,
-              placeName: l.place.place_name,
-              placeAddr: l.place.address_name,
-              placeUrl: l.place.place_url,
-              lat: Number(l.place.y),
-              lng: Number(l.place.x),
-              // this.getPlaceImageUrl 호출
-              imageUrl: await this.commonService.getPlaceImageUrl(
-                l.place.place_url,
-              ),
-            })),
-          );
-
-          return {
-            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-            courseNo: 1,
-            courseName: convertName[0],
-            places: resolvedPlaces, // 실제 데이터 배열 할당
-          };
-        })(), // 즉시 실행하여 Promise를 listPromises 배열에 추가
-
-        // 두 번째 코스 (accuracy)
-        (async () => {
-          const resolvedPlaces = await Promise.all(
-            arr.accuracy.map(async (l) => ({
-              placeId: l.course_id,
-              placeName: l.place.place_name,
-              placeAddr: l.place.address_name,
-              placeUrl: l.place.place_url,
-              lat: Number(l.place.y),
-              lng: Number(l.place.x),
-              imageUrl: await this.commonService.getPlaceImageUrl(
-                l.place.place_url,
-              ),
-            })),
-          );
-
-          return {
-            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-            courseNo: 2,
-            courseName: convertName[1],
-            places: resolvedPlaces,
-          };
-        })(),
-
-        // 세 번째 코스 (diversity)
-        (async () => {
-          const resolvedPlaces = await Promise.all(
-            arr.diversity.map(async (l) => ({
-              placeId: l.course_id,
-              placeName: l.place.place_name,
-              placeAddr: l.place.address_name,
-              placeUrl: l.place.place_url,
-              lat: Number(l.place.y),
-              lng: Number(l.place.x),
-              imageUrl: await this.commonService.getPlaceImageUrl(
-                l.place.place_url,
-              ),
-            })),
-          );
-
-          return {
-            courseId: Math.floor(100000 + Math.random() * 900000).toString(),
-            courseNo: 3,
-            courseName: convertName[2],
-            places: resolvedPlaces,
-          };
-        })(),
-      ];
-
-      // listPromises 배열에 있는 3개의 큰 비동기 작업이 모두 완료될 때까지 기다림
-      const list = await Promise.all(listPromises);
-
-      // 최종 반환 데이터
-      data = {
-        party: {
-          partyName: party.party_name,
-          partyDate: party.date_time,
-          midPoint: midpoint.name,
-          midPointLat: midpoint.lat,
-          midPointLng: midpoint.lng,
-          partyType: party.party_type,
-          courses: course_list.map((c) => ({
-            courseNo: c.course_no,
-            courseId: c.course_id,
-            places: {
-              placeId: '',
-              placeName: c.place_name ?? '',
-              placeAddr: c.place_address ?? '',
-              lat: c.place_lat ?? 0,
-              lng: c.place_lng ?? 0,
-              placeUrl: c.place_url ?? '',
-              imageUrl: '',
-            },
-          })),
-        },
-        list, // ⬅ 배열 형태로 반환됨
-      };
-
-      return data;
-    }
-
-    /* ---------------------------------------------------
-        CUSTOM_COURSE
-    --------------------------------------------------- */
-    arr = await this.kakaoService.findCustomCoursePlaces(
-      party_id,
-      course_list[0].course_id,
-      midpoint.lat,
-      midpoint.lng,
-    );
-
-    data = {
-      party: {
-        partyName: party.party_name,
-        partyDate: party.date_time,
-        midPoint: midpoint.name,
-        midPointLat: midpoint.lat,
-        midPointLng: midpoint.lng,
-        partyType: party.party_type,
-        courses: course_list.map((c) => ({
-          courseNo: c.course_no,
-          courseId: c.course_id,
-          places: {
-            placeId: '',
-            placeName: c.place_name ?? '',
-            placeAddr: c.place_address ?? '',
-            lat: c.place_lat ?? 0,
-            lng: c.place_lng ?? 0,
-          },
-        })),
-      },
-      list: await Promise.all(
-        arr.map(async (l) => ({
-          placeId: l.id,
-          placeName: l.place_name,
-          placeAddr: l.address_name,
-          placeUrl: l.place_url,
-          imageUrl: await this.commonService.getPlaceImageUrl(l.place_url),
-          lat: l.y,
-          lng: l.x,
-        })),
-      ),
-    };
-
-    return data;
+    return await this.resultService.getMid(party_id);
   }
 
   //모임에 선정가능한 장소 리스트를 불러오는 기능
@@ -1062,7 +890,7 @@ export class PartyController {
   //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '모임 장소 선택 리스트',
+    summary: '모임 장소 선택 리스트[getCourseList]',
     description: '모임 장소 선정 시 필요한 장소 리스트 제공',
     operationId: 'getCourseList',
   })
@@ -1120,7 +948,7 @@ export class PartyController {
   @UseGuards(JwtAuthGuard)
   //#region swagger
   @ApiBearerAuth()
-  @ApiOperation({ summary: '모임 정보 조회' })
+  @ApiOperation({ summary: '모임 정보 조회[getPartyInfo]' })
   @ApiResponse({
     status: 200,
     description: '모임 정보 조회 성공',
@@ -1148,7 +976,7 @@ export class PartyController {
   //#region swagger
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '코스 리스트 불러오기',
+    summary: '코스 리스트 불러오기[getCourseListInfo]',
     operationId: 'getCourseListInfo',
   })
   @ApiResponse({
@@ -1172,20 +1000,15 @@ export class PartyController {
       },
     },
   })
+  @ApiParam({
+    name: 'party_id',
+    required: true,
+  })
   //#endregion
   async getCourseListInfo(@Param('party_id') party_id: string) {
     const course_list = await this.courseService.readCourseList(party_id);
     return {
-      courses: course_list.map((c) => ({
-        courseNo: c.course_no,
-        courseId: c.course_id,
-        places: {
-          placeName: c.place_name,
-          placeAddr: c.place_address,
-          lat: c.place_lat,
-          lng: c.place_lng,
-        },
-      })),
+      courses: course_list.map((c) => new CourseResponseDto(c)),
     };
   }
 
@@ -1314,7 +1137,14 @@ export class PartyController {
   @Post('/guest/result')
   @HttpCode(HttpStatus.OK)
   //#region swagger
-
+  @ApiOperation({
+    summary: '게스트용 결과 페이지',
+    operationId: 'guestResult',
+  })
+  @ApiBody({
+    type: GuestDto,
+    description: '게스트 모임 생성에 필요한 정보(토큰 필요없음)',
+  })
   //#endregion
   async guestResult(@Body() dto: GuestDto) {
     return await this.guestService.guestResult(dto);
